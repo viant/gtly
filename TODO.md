@@ -4,4 +4,4 @@ Add additional codecs:
 - Add avro codec
 - Add yaml codec
 
-Adding Search functionality to Collection type(map/array/multimap)
+Add collection search functionality for map/array/multimap
