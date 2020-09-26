@@ -9,7 +9,12 @@ This library is compatible with Go 1.15+
 Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes.
 
 - [Motivation](#motivation)
+- [Introduction](#introduction)
 - [Usage](#usage)
+   - [Object](#object)
+   - [Array](#array)
+   - [Map](#map)
+   - [Multimap](#multimap)
 - [Configuration Rule](#configuration-rule)
 - [License](#license)
 
@@ -31,7 +36,7 @@ What's more proto field define field meta data like DateLayout, OutputName contr
 
 ## Usage
 
-#### Creating dynamic objects
+#### Object
 
 ```go
 package mypacakge
@@ -83,7 +88,7 @@ func NewObject_Usage() {
 }
 ```
 
-#### Array Usage
+#### Array
 
 ```go
 package mypacakge
@@ -141,8 +146,7 @@ func NewArray_Usage() {
 
 ```
 
-#### Map Usage
-
+#### Map
 
 ```go
 package mypacakge
@@ -194,7 +198,7 @@ func NewMap_Usage() {
 }
 ```
 
-#### MultiMap Usage
+#### MultiMap
 
 ```go
 func NewMultiMap_Usage() {
