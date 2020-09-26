@@ -45,47 +45,37 @@ import (
 )
 
 func NewObject_Usage() {
-  
-    //create foo type provider 
-	fooProvider := gtly.NewProvider("foo",
+	fooProvider := gtly.NewProvider("foo",  //create foo type 
 		gtly.NewField("id", gtly.FieldTypeInt),
 		gtly.NewField("firsName", gtly.FieldTypeString),
 		gtly.NewField("description", gtly.FieldTypeString, gtly.OmitEmptyOpt(true)),
 		gtly.NewField("updated", gtly.FieldTypeTime, gtly.DateLayoutOpt("2006-01-02T15:04:05Z07:00")),
 		gtly.NewField("numbers", gtly.FieldTypeArray, gtly.ComponentTypeOpt(gtly.FieldTypeInt)),
 	)
-
     //create an instance of foo type
 	foo1 := fooProvider.NewObject()
 	foo1.SetInt("id", 1)
 	foo1.SetString("firsName", "Adam")
 	foo1.SetTime("updated", time.Now())
 	foo1.SetValue("numbers", []int{1, 2, 3})
-
 	JSON, err := json.Marshal(foo1)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("%s\n", JSON)
     //Prints: {"id":1,"firsName":"Adam","updated":"2020-09-25T20:43:40-07:00","numbers":[1,2,3]}
-
-
     //change foo type output to upper underscore
 	fooProvider.OutputCaseFormat(gtly.CaseLowerCamel, gtly.CaseUpperUnderscore)
 	JSON, _ = json.Marshal(foo1)
 	fmt.Printf("%s\n", JSON)
     //Prints: {"ID":1,"FIRS_NAME":"Adam","UPDATED":"2020-09-25T20:43:40-07:00","NUMBERS":[1,2,3]}
-
     //change foo type output to lower underscore
 	fooProvider.OutputCaseFormat(gtly.CaseLowerCamel, gtly.CaseLowerUnderscore)
-	
-
     foo1.SetBool("active", true) //add dynamically new field
 	foo1.SetString("description", "some description") // set value for existing field
 	JSON, _ = json.Marshal(foo1)
 	fmt.Printf("%s\n", JSON)
     //Prints: {"id":1,"firs_name":"Adam","description":"some description","updated":"2020-09-25T20:43:40-07:00","numbers":[1,2,3],"active":true}
-
    //create another instance of foo type
     foo2 := fooProvider.NewObject()
     JSON, _ = json.Marshal(foo2)
@@ -116,8 +106,6 @@ func NewArray_Usage() {
         gtly.NewField("numbers", gtly.FieldTypeArray, gtly.ComponentTypeOpt(gtly.FieldTypeInt)),
     )
     fooArray1 := fooProvider.NewArray()
-    
-    
     for i:=0;i<10;i++ {
         foo1 := fooProvider.NewObject()
         foo1.SetInt("id", 1)
@@ -125,14 +113,12 @@ func NewArray_Usage() {
         foo1.SetString("firsName", "Adam")
         fooArray1.AddObject(foo1)
     }
-    
     now := time.Now()
     fooArray1.Add(map[string]interface{}{
         "id":      100,
         "firsName":    "Tom",
         "updated": now,
     })
-    
     totalIncome := 0.0
     incomeField := fooProvider.Field("income")
     //Iterating collection
@@ -170,7 +156,6 @@ import (
 )
 
 func NewMap_Usage() {
-
 	fooProvider := gtly.NewProvider("foo",
 		gtly.NewField("id", gtly.FieldTypeInt),
 		gtly.NewField("firsName", gtly.FieldTypeString),
@@ -178,7 +163,6 @@ func NewMap_Usage() {
 		gtly.NewField("updated", gtly.FieldTypeTime, gtly.DateLayoutOpt(time.RFC3339)),
 		gtly.NewField("numbers", gtly.FieldTypeArray, gtly.ComponentTypeOpt(gtly.FieldTypeInt)),
 	)
-
 	//Creates a map keyed by id field
 	aMap := fooProvider.NewMap(gtly.NewIndex([]string{"id"}))
 	for i := 0; i < 10; i++ {
@@ -187,7 +171,6 @@ func NewMap_Usage() {
 		foo.SetString("firsName", fmt.Sprintf("Name %v", i))
 		aMap.AddObject(foo)
 	}
-	
 	//Accessing map
 	foo1 := aMap.Object("1")
 	JSON, err := json.Marshal(foo1)
@@ -196,15 +179,12 @@ func NewMap_Usage() {
 	}
 	fmt.Printf("%s\n", JSON)
     //Prints  {"id":1,"firsName":"Name 1","updated":null,"numbers":null}
-	
 	//Iterating map
-    	aMap.Pairs(func(key string, item *gtly.Object) (bool, error) {
-    		fmt.Printf("id: %v\n",  item.Int("id"))
-    		fmt.Printf("name: %v\n",  item.String("name"))
-    		return true, nil
-    	})
-	
-
+    aMap.Pairs(func(key string, item *gtly.Object) (bool, error) {
+        fmt.Printf("id: %v\n",  item.Int("id"))
+        fmt.Printf("name: %v\n",  item.String("name"))
+        return true, nil
+    })
 	JSON, err = json.Marshal(aMap)
 	if err != nil {
 		log.Fatal(err)
@@ -218,7 +198,6 @@ func NewMap_Usage() {
 
 ```go
 func NewMultiMap_Usage() {
-
 	fooProvider := gtly.NewProvider("foo",
 		gtly.NewField("id", gtly.FieldTypeInt),
 		gtly.NewField("firsName", gtly.FieldTypeString),
@@ -226,7 +205,6 @@ func NewMultiMap_Usage() {
 		gtly.NewField("updated", gtly.FieldTypeTime, gtly.DateLayoutOpt(time.RFC3339)),
 		gtly.NewField("numbers", gtly.FieldTypeArray, gtly.ComponentTypeOpt(gtly.FieldTypeInt)),
 	)
-
 	//Creates a multi map keyed by id field
 	aMap := fooProvider.NewMultimap(gtly.NewIndex([]string{"city"}))
 	for i := 0; i < 10; i++ {
@@ -240,7 +218,6 @@ func NewMultiMap_Usage() {
 		}
 		aMap.AddObject(foo)
 	}
-
 	//Accessing map
 	fooInWarsawSlice := aMap.Slice("Warsaw")
 	JSON, err := json.Marshal(fooInWarsawSlice)
@@ -249,8 +226,6 @@ func NewMultiMap_Usage() {
 	}
 	fmt.Printf("%s\n", JSON)
 	//Prints [{"id":1,"firsName":"Name 1","city":"Warsaw","updated":null,"numbers":null},{"id":3,"firsName":"Name 3","city":"Warsaw","updated":null,"numbers":null},{"id":5,"firsName":"Name 5","city":"Warsaw","updated":null,"numbers":null},{"id":7,"firsName":"Name 7","city":"Warsaw","updated":null,"numbers":null},{"id":9,"firsName":"Name 9","city":"Warsaw","updated":null,"numbers":null}]
-
-
 	//Iterating multi map
 	err = aMap.Slices(func(key string, value *gtly.Array) (bool, error) {
 		fmt.Printf("%v -> %v\n", key, value.Size())
@@ -259,7 +234,6 @@ func NewMultiMap_Usage() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	JSON, err = json.Marshal(aMap)
 	if err != nil {
 		log.Fatal(err)
@@ -268,7 +242,6 @@ func NewMultiMap_Usage() {
 	//[{"id":0,"firsName":"Name 0","city":"Cracow","updated":null,"numbers":null},{"id":2,"firsName":"Name 2","city":"Cracow","updated":null,"numbers":null},{"id":4,"firsName":"Name 4","city":"Cracow","updated":null,"numbers":null},{"id":6,"firsName":"Name 6","city":"Cracow","updated":null,"numbers":null},{"id":8,"firsName":"Name 8","city":"Cracow","updated":null,"numbers":null},{"id":1,"firsName":"Name 1","city":"Warsaw","updated":null,"numbers":null},{"id":3,"firsName":"Name 3","city":"Warsaw","updated":null,"numbers":null},{"id":5,"firsName":"Name 5","city":"Warsaw","updated":null,"numbers":null},{"id":7,"firsName":"Name 7","city":"Warsaw","updated":null,"numbers":null},{"id":9,"firsName":"Name 9","city":"Warsaw","updated":null,"numbers":null}]
 
 }
-
 ```
 
 
