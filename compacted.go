@@ -22,3 +22,20 @@ func (c Compacted) Update(collection Collection) error {
 	}
 	return nil
 }
+
+
+//TransformBinary transform binary data into string
+func (c *Compacted) TransformBinary() {
+	for i := range c.Data {
+		for j, item := range c.Data[i] {
+			switch val := item.(type) {
+			case []byte:
+				if len(val) == 0 {
+					c.Data[i][j] = nil
+					continue
+				}
+				c.Data[i][j] = string(val)
+			}
+		}
+	}
+}
