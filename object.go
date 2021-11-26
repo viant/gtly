@@ -1,14 +1,17 @@
 package gtly
 
 import (
-	"github.com/viant/toolbox"
+	"reflect"
 	"time"
+	"unsafe"
 )
 
 //Object represents dynamic object
 type Object struct {
-	_proto *Proto
-	_data  []interface{}
+	_proto    *Proto
+	_setAt    []bool
+	_dataAddr unsafe.Pointer
+	value     reflect.Value
 }
 
 //Proto returns object _proto
@@ -16,213 +19,273 @@ func (o *Object) Proto() *Proto {
 	return o._proto
 }
 
+func (o *Object) StructValue() interface{} {
+	return o.value.Elem().Interface()
+}
+
+//SetValue sets fieldValues
+func (o *Object) SetValue(fieldName string, value interface{}) {
+	field := o._proto.Field(fieldName)
+	switch valueTyped := value.(type) {
+	case float64:
+		if field.kind == reflect.Int {
+			field.xField.SetInt(o._dataAddr, int(valueTyped))
+		} else {
+			field.xField.SetFloat64(o._dataAddr, valueTyped)
+		}
+	case float32:
+		field.xField.SetFloat32(o._dataAddr, valueTyped)
+	case int:
+		field.xField.SetInt(o._dataAddr, valueTyped)
+	case int64:
+		field.xField.SetInt64(o._dataAddr, valueTyped)
+	case int32:
+		field.xField.SetInt32(o._dataAddr, valueTyped)
+	case int16:
+		field.xField.SetInt16(o._dataAddr, valueTyped)
+	case int8:
+		field.xField.SetInt8(o._dataAddr, valueTyped)
+	case uint:
+		field.xField.SetUint(o._dataAddr, valueTyped)
+	case uint64:
+		field.xField.SetUint64(o._dataAddr, valueTyped)
+	case uint32:
+		field.xField.SetUint32(o._dataAddr, valueTyped)
+	case uint16:
+		field.xField.SetUint16(o._dataAddr, valueTyped)
+	case uint8:
+		field.xField.SetUint8(o._dataAddr, valueTyped)
+	case string:
+		field.xField.SetString(o._dataAddr, valueTyped)
+	case time.Time:
+		field.xField.SetTime(o._dataAddr, valueTyped)
+	case bool:
+		field.xField.SetBool(o._dataAddr, valueTyped)
+	default:
+		field.xField.SetValue(o._dataAddr, value)
+	}
+	o.markFieldSet(field.Index)
+}
+
+func (o *Object) Mutator(fieldName string) func(value interface{}) {
+	field := o._proto.Field(fieldName)
+	XField := field.xField
+	return func(value interface{}) {
+		XField.SetValue(o._dataAddr, value)
+		o.markFieldSet(field.Index)
+	}
+}
+
+func (o *Object) Accessor(fieldName string) func() interface{} {
+	field := o._proto.Field(fieldName)
+	XField := field.xField
+	return func() interface{} {
+		return XField.Value(o._dataAddr)
+	}
+}
+
+func (o *Object) IntMutator(fieldName string) func(value int) {
+	field := o._proto.Field(fieldName)
+	XField := field.xField
+	return func(value int) {
+		XField.SetInt(o._dataAddr, value)
+		o.markFieldSet(field.Index)
+	}
+}
+
+func (o *Object) IntAccessor(fieldName string) func() int {
+	field := o._proto.Field(fieldName)
+	XField := field.xField
+	return func() int {
+		return XField.Int(o._dataAddr)
+	}
+}
+
+func (o *Object) FloatMutator(fieldName string) func(value float64) {
+	field := o._proto.Field(fieldName)
+	XField := field.xField
+	return func(value float64) {
+		XField.SetFloat64(o._dataAddr, value)
+		o.markFieldSet(field.Index)
+	}
+}
+
+func (o *Object) FloatAccessor(fieldName string) func() float64 {
+	field := o._proto.Field(fieldName)
+	XField := field.xField
+	return func() float64 {
+		return XField.Float64(o._dataAddr)
+	}
+}
+
+func (o *Object) StringMutator(fieldName string) func(value string) {
+	field := o._proto.Field(fieldName)
+	XField := field.xField
+	return func(value string) {
+		XField.SetString(o._dataAddr, value)
+		o.markFieldSet(field.Index)
+	}
+}
+
+func (o *Object) StringAccessor(fieldName string) func() string {
+	field := o._proto.Field(fieldName)
+	XField := field.xField
+	return func() string {
+		return XField.String(o._dataAddr)
+	}
+}
+
+func (o *Object) BoolMutator(fieldName string) func(value bool) {
+	field := o._proto.Field(fieldName)
+	XField := field.xField
+	return func(value bool) {
+		XField.SetBool(o._dataAddr, value)
+		o.markFieldSet(field.Index)
+	}
+}
+
+func (o *Object) BoolAccessor(fieldName string) func() bool {
+	field := o._proto.Field(fieldName)
+	XField := field.xField
+	return func() bool {
+		return XField.Bool(o._dataAddr)
+	}
+}
+
+func (o *Object) TimeMutator(fieldName string) func(time time.Time) {
+	field := o._proto.Field(fieldName)
+	XField := field.xField
+	return func(value time.Time) {
+		XField.SetTime(o._dataAddr, value)
+		o.markFieldSet(field.Index)
+	}
+}
+
+func (o *Object) TimeAccessor(fieldName string) func() time.Time {
+	field := o._proto.Field(fieldName)
+	XField := field.xField
+	return func() time.Time {
+		return XField.Time(o._dataAddr)
+	}
+}
+
+func (o *Object) Value(fieldName string) interface{} {
+	field := o._proto.Field(fieldName)
+	return field.xField.Value(o._dataAddr)
+}
+
 //Init initialise entire object
 func (o *Object) Init(values map[string]interface{}) {
-	o._data = o._proto.asValues(values)
+	for k, v := range values {
+		o.SetValue(k, v)
+	}
 }
 
-//AsMap return map
-func (o *Object) AsMap() map[string]interface{} {
-	return o._proto.asMap(o._data)
+//SetAt returns true if value was set at given index
+func (o *Object) SetAt(index int) bool {
+	return index < len(o._setAt) && o._setAt[index]
 }
 
-//SetInt sets int values
-func (o *Object) SetInt(name string, value int) {
-	field := o._proto.FieldWithValue(name, value)
-	field.SetValue(value, &o._data)
-}
-
-//SetFloat sets float values
-func (o *Object) SetFloat(name string, value float64) {
-	field := o._proto.FieldWithValue(name, value)
-	field.SetValue(value, &o._data)
-}
-
-//SetString sets string value
-func (o *Object) SetString(name string, value string) {
-	field := o._proto.FieldWithValue(name, value)
-	field.SetValue(value, &o._data)
-}
-
-//SetBool sets string value
-func (o *Object) SetBool(name string, value bool) {
-	field := o._proto.FieldWithValue(name, value)
-	field.SetValue(value, &o._data)
-}
-
-//SetTime sets string value
-func (o *Object) SetTime(name string, value time.Time) {
-	field := o._proto.FieldWithValue(name, value)
-	field.SetValue(value, &o._data)
-}
-
-//SetValue sets values
-func (o *Object) SetValue(name string, value interface{}) {
-	field := o._proto.FieldWithValue(name, value)
-	field.Set(value, &o._data)
-}
-
-//Value get value for supplied Name
-func (o *Object) Value(name string) interface{} {
-	field := o._proto.Field(name)
-	if field == nil {
-		return nil
-	}
-	return field.Get(o._data)
-}
-
-//Int returns int for supplied field name
-func (o *Object) Int(name string) int {
-	field := o._proto.Field(name)
-	if field == nil {
-		return 0
-	}
-	value := field.Get(o._data)
-	if value == nil {
-		return 0
-	}
-	return toolbox.AsInt(value)
-}
-
-//Float returns float for supplied field name
-func (o *Object) Float(name string) float64 {
-	field := o._proto.Field(name)
-	if field == nil {
-		return 0
-	}
-	value := field.Get(o._data)
-	if value == nil {
-		return 0
-	}
-	return toolbox.AsFloat(value)
-}
-
-//Bool return bool for supplied field name
-func (o *Object) Bool(name string) bool {
-	field := o._proto.Field(name)
-	if field == nil {
-		return false
-	}
-	value := field.Get(o._data)
-	if value == nil {
-		return false
-	}
-	return toolbox.AsBoolean(value)
-}
-
-//String return string for supplied field name
-func (o *Object) String(name string) string {
-	field := o._proto.Field(name)
-	if field == nil {
-		return ""
-	}
-	value := field.Get(o._data)
-	if value == nil {
-		return ""
-	}
-	return toolbox.AsString(value)
-}
-
-//ValueAt get value for supplied filed Index
-func (o *Object) ValueAt(index int) interface{} {
-	if index >= len(o._data) {
-		return nil
-	}
-	return Value(o._data[index])
-}
-
-//IntAt returns int value for specified index
-func (o *Object) IntAt(index int) int {
-	if index >= len(o._data) {
-		return 0
-	}
-	val, ok := o._data[index].(int)
-	if !ok {
-		return 0
-	}
-	return val
-}
-
-//FloatAt returns float value for specified index
-func (o *Object) FloatAt(index int) float64 {
-	if index >= len(o._data) {
-		return 0
-	}
-	val, ok := o._data[index].(float64)
-	if !ok {
-		return 0
-	}
-	return val
-}
-
-//StringAt returns int value for specified index
-func (o *Object) StringAt(index int) string {
-	if index >= len(o._data) {
-		return ""
-	}
-	val, ok := o._data[index].(string)
-	if !ok {
-		return ""
-	}
-	return val
-}
-
-//BoolAt returns bool value for specified index
-func (o *Object) BoolAt(index int) bool {
-	if index >= len(o._data) {
-		return false
-	}
-	val, ok := o._data[index].(bool)
-	if !ok {
-		return false
-	}
-	return val
-}
-
-//HasAt returns true if has value
-func (o *Object) HasAt(index int) bool {
-	if index >= len(o._data) {
-		return false
-	}
-	return o._data[index] != nil
-}
-
-//FloatValue return float for supplied Name
-func (o *Object) FloatValue(name string) (*float64, error) {
-	val := o.Value(name)
-	if val == nil {
-		return nil, nil
-	}
-	casted, err := toolbox.ToFloat(val)
-	return &casted, err
-}
-
-//IntValue returns int value
-func (o *Object) IntValue(name string) (*int, error) {
-	val := o.Value(name)
-	if val == nil {
-		return nil, nil
-	}
-	casted, err := toolbox.ToInt(val)
-	return &casted, err
-}
-
-//StringValue returns int value
-func (o *Object) StringValue(name string) *string {
-	val := o.Value(name)
-	if val == nil {
-		return nil
-	}
-	casted := toolbox.AsString(val)
-	return &casted
+func (o *Object) markFieldSet(index int) {
+	o._setAt[index] = true
 }
 
 //IsNil returns true if object is nil
 func (o *Object) IsNil() bool {
-	for i := range o._data {
-		if !o._proto.fields[i].IsEmpty(o._proto, o._data[i]) {
+	for _, v := range o._setAt {
+		if v == true {
 			return false
 		}
 	}
 	return true
+}
+
+//ValueAt get value for supplied filed Index
+func (o *Object) ValueAt(index int) (interface{}, bool) {
+	if index < 0 || index >= len(o._proto.fields) || !o._setAt[index] {
+		return nil, false
+	}
+
+	field := o._proto.FieldAt(index)
+	return field.xField.Value(o._dataAddr), true
+}
+
+//IntAt returns int value for specified index
+func (o *Object) IntAt(index int) (int, bool) {
+	if index < 0 || index >= len(o._proto.fields) || !o._setAt[index] {
+		return 0, false
+	}
+
+	field := o._proto.FieldAt(index)
+	return field.xField.Int(o._dataAddr), true
+}
+
+//StringAt returns int value for specified index
+func (o *Object) StringAt(index int) (string, bool) {
+	if index < 0 || index >= len(o._proto.fields) || !o._setAt[index] {
+		return "", false
+	}
+
+	field := o._proto.FieldAt(index)
+	return field.xField.String(o._dataAddr), true
+}
+
+//BoolAt returns bool value for specified index
+func (o *Object) BoolAt(index int) (bool, bool) {
+	if index < 0 || index >= len(o._proto.fields) || !o._setAt[index] {
+		return false, false
+	}
+
+	field := o._proto.FieldAt(index)
+	return field.xField.Bool(o._dataAddr), true
+}
+
+//FloatAt returns float value for specified index
+func (o *Object) FloatAt(index int) (float64, bool) {
+	if index < 0 || index >= len(o._proto.fields) || !o._setAt[index] {
+		return 0.0, false
+	}
+
+	field := o._proto.FieldAt(index)
+	return field.xField.Float64(o._dataAddr), true
+}
+
+//TimeAt returns time value for specified index
+func (o *Object) TimeAt(index int) (time.Time, bool) {
+	if index < 0 || index >= len(o._proto.fields) || !o._setAt[index] {
+		return time.Time{}, false
+	}
+
+	field := o._proto.FieldAt(index)
+	return field.xField.Time(o._dataAddr), true
+}
+
+//AsMap return map
+func (o *Object) AsMap() map[string]interface{} {
+	result := map[string]interface{}{}
+	objAddr := o._dataAddr
+	for _, field := range o._proto.Fields() {
+		if !o.SetAt(field.Index) || field.hidden {
+			continue
+		}
+		outputName := o.FieldOutputName(field)
+		if outputName == "" {
+			continue
+		}
+		value := field.xField.Value(objAddr)
+		result[outputName] = value
+	}
+	return result
+}
+
+func (o *Object) FieldOutputName(field *Field) string {
+	outputName := field.Name
+	if field.outputName != "" {
+		outputName = field.outputName
+	}
+	return outputName
+}
+
+func (o *Object) Field(name string) *Field {
+	return o._proto.Field(name)
 }

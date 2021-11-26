@@ -1,8 +1,11 @@
 package gtly
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/toolbox"
+	"github.com/viant/xunsafe"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -26,6 +29,36 @@ type Proto struct {
 	caseFormat       int
 	outputCaseFormat int
 	inputCaseFormat  int
+	dataType         reflect.Type
+	kind             reflect.Kind
+}
+
+func (p *Proto) Type() reflect.Type {
+	p.buildTypeIfNeeded()
+	return p.dataType
+}
+
+func (p *Proto) buildTypeIfNeeded() {
+	if p.dataType == nil {
+		p.buildType()
+	}
+}
+
+func (p *Proto) buildType() {
+	fields := p.fields
+	structFields := make([]reflect.StructField, len(fields))
+	for i, field := range fields {
+		structFields[i] = reflect.StructField{
+			Name: field.Name,
+			Type: field.Type,
+		}
+		fields[i].kind = field.Type.Kind()
+	}
+	p.dataType = reflect.StructOf(structFields)
+	for i, field := range fields {
+		fields[i].xField = xunsafe.FieldByName(p.dataType, field.Name)
+	}
+
 }
 
 //SimpleName returns simple name
@@ -111,18 +144,6 @@ func (p *Proto) Size() int {
 	return result
 }
 
-func (p *Proto) asValues(values map[string]interface{}) []interface{} {
-	var result = make([]interface{}, len(values))
-	if len(values) == 0 {
-		return result
-	}
-	for k := range values {
-		field := p.FieldWithValue(k, values[k])
-		field.Set(values[k], &result)
-	}
-	return result
-}
-
 func (p *Proto) asMap(values []interface{}) map[string]interface{} {
 	var result = make(map[string]interface{})
 	for _, field := range p.fields {
@@ -159,10 +180,12 @@ func (p *Proto) Fields() []*Field {
 
 //Field returns field for specified Name
 func (p *Proto) Field(name string) *Field {
-	p.lock.RLock()
 	field := p.fieldNames[name]
-	p.lock.RUnlock()
 	return field
+}
+
+func (p *Proto) FieldAt(index int) *Field {
+	return p.fields[index]
 }
 
 //Object creates an object
@@ -171,7 +194,7 @@ func (p *Proto) Object(values []interface{}) (*Object, error) {
 		return nil, errors.Errorf("invalid value count: %v, field count: %v", len(values), len(p.fields))
 	}
 
-	object := &Object{_proto: p, _data: values}
+	object := &Object{_proto: p}
 	if len(p.nilTypes) > 0 {
 		for _, index := range p.nilTypes {
 			if values[index] != nil {
@@ -209,6 +232,9 @@ func (p *Proto) FieldWithValue(fieldName string, value interface{}) *Field {
 func (p *Proto) AddField(field *Field) *Field {
 	p.lock.Lock()
 	defer p.lock.Unlock()
+	if p.dataType != nil {
+		panic(fmt.Sprintf("proto has been already in use"))
+	}
 	if p.caseFormat != p.outputCaseFormat {
 		field.outputName = toolbox.ToCaseFormat(field.Name, p.caseFormat, p.outputCaseFormat)
 	}
@@ -220,6 +246,7 @@ func (p *Proto) AddField(field *Field) *Field {
 		p.fieldNames[field.outputName] = field
 	}
 	p.fields = append(p.fields, field)
+	field.Index = len(p.fields) - 1
 	return field
 }
 

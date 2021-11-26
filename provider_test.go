@@ -2,9 +2,12 @@ package gtly_test
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"github.com/viant/gtly"
 	"github.com/viant/gtly/codec/json"
 	"log"
+	"reflect"
+	"testing"
 	"time"
 )
 
@@ -19,9 +22,9 @@ func ExampleProvider_NewObject() {
 		gtly.NewField("numbers", gtly.FieldTypeArray, gtly.ComponentTypeOpt(gtly.FieldTypeInt)),
 	)
 	foo1 := fooProvider.NewObject()
-	foo1.SetInt("id", 1)
-	foo1.SetString("firsName", "Adam")
-	foo1.SetTime("updated", time.Now())
+	foo1.SetValue("id", 1)
+	foo1.SetValue("firsName", "Adam")
+	foo1.SetValue("updated", time.Now())
 	foo1.SetValue("numbers", []int{1, 2, 3})
 
 	JSON, err := json.Marshal(foo1)
@@ -34,8 +37,8 @@ func ExampleProvider_NewObject() {
 	fmt.Printf("%s\n", JSON)
 
 	fooProvider.OutputCaseFormat(gtly.CaseLowerCamel, gtly.CaseLowerUnderscore)
-	foo1.SetBool("active", true)
-	foo1.SetString("description", "some description")
+	foo1.SetValue("active", true)
+	foo1.SetValue("description", "some description")
 
 	JSON, _ = json.Marshal(foo1)
 	fmt.Printf("%s\n", JSON)
@@ -55,9 +58,9 @@ func ExampleProvider_NewArray() {
 
 	for i := 0; i < 10; i++ {
 		foo1 := fooProvider.NewObject()
-		foo1.SetInt("id", 1)
-		foo1.SetFloat("income", 64000.0*float64(1+(10/(i+1))))
-		foo1.SetString("firsName", "Adam")
+		foo1.SetValue("id", 1)
+		foo1.SetValue("income", 64000.0*float64(1+(10/(i+1))))
+		foo1.SetValue("firsName", "Adam")
 		fooArray1.AddObject(foo1)
 	}
 
@@ -72,9 +75,10 @@ func ExampleProvider_NewArray() {
 	incomeField := fooProvider.Field("income")
 	//Iterating collection
 	err := fooArray1.Objects(func(object *gtly.Object) (bool, error) {
-		fmt.Printf("id: %v\n", object.Int("id"))
-		fmt.Printf("name: %v\n", object.String("name"))
-		totalIncome += object.FloatAt(incomeField.Index)
+		fmt.Printf("id: %v\n", object.Value("id"))
+		fmt.Printf("name: %v\n", object.Value("name"))
+		value, _ := object.FloatAt(incomeField.Index)
+		totalIncome += value
 		return true, nil
 	})
 	fmt.Printf("income total: %v\n", totalIncome)
@@ -100,11 +104,11 @@ func ExampleProvider_NewMap() {
 	)
 
 	//Creates a map keyed by id field
-	aMap := fooProvider.NewMap(gtly.NewIndex([]string{"id"}))
+	aMap := fooProvider.NewMap(gtly.NewKeyProvider("id"))
 	for i := 0; i < 10; i++ {
 		foo := fooProvider.NewObject()
-		foo.SetInt("id", i)
-		foo.SetString("firsName", fmt.Sprintf("Name %v", i))
+		foo.SetValue("id", i)
+		foo.SetValue("firsName", fmt.Sprintf("Name %v", i))
 		aMap.AddObject(foo)
 	}
 
@@ -117,9 +121,9 @@ func ExampleProvider_NewMap() {
 	fmt.Printf("%s\n", JSON)
 
 	//Iterating map
-	err = aMap.Pairs(func(key string, item *gtly.Object) (bool, error) {
-		fmt.Printf("id: %v\n", item.Int("id"))
-		fmt.Printf("name: %v\n", item.String("name"))
+	err = aMap.Pairs(func(key interface{}, item *gtly.Object) (bool, error) {
+		fmt.Printf("id: %v\n", item.Value("id"))
+		fmt.Printf("name: %v\n", item.Value("name"))
 		return true, nil
 	})
 	if err != nil {
@@ -146,15 +150,15 @@ func ExampleProvider_NewMultimap() {
 	)
 
 	//Creates a multi map keyed by id field
-	aMap := fooProvider.NewMultimap(gtly.NewIndex([]string{"city"}))
+	aMap := fooProvider.NewMultimap(gtly.NewKeyProvider("city"))
 	for i := 0; i < 10; i++ {
 		foo := fooProvider.NewObject()
-		foo.SetInt("id", i)
-		foo.SetString("firsName", fmt.Sprintf("Name %v", i))
+		foo.SetValue("id", i)
+		foo.SetValue("firsName", fmt.Sprintf("Name %v", i))
 		if i%2 == 0 {
-			foo.SetString("city", "Cracow")
+			foo.SetValue("city", "Cracow")
 		} else {
-			foo.SetString("city", "Warsaw")
+			foo.SetValue("city", "Warsaw")
 		}
 		aMap.AddObject(foo)
 	}
@@ -169,7 +173,7 @@ func ExampleProvider_NewMultimap() {
 	//Prints [{"id":1,"firsName":"Name 1","city":"Warsaw","updated":null,"numbers":null},{"id":3,"firsName":"Name 3","city":"Warsaw","updated":null,"numbers":null},{"id":5,"firsName":"Name 5","city":"Warsaw","updated":null,"numbers":null},{"id":7,"firsName":"Name 7","city":"Warsaw","updated":null,"numbers":null},{"id":9,"firsName":"Name 9","city":"Warsaw","updated":null,"numbers":null}]
 
 	//Iterating multi map
-	err = aMap.Slices(func(key string, value *gtly.Array) (bool, error) {
+	err = aMap.Slices(func(key interface{}, value *gtly.Array) (bool, error) {
 		fmt.Printf("%v -> %v\n", key, value.Size())
 		return true, nil
 	})
@@ -184,4 +188,59 @@ func ExampleProvider_NewMultimap() {
 	fmt.Printf("%s\n", JSON)
 	//[{"id":0,"firsName":"Name 0","city":"Cracow","updated":null,"numbers":null},{"id":2,"firsName":"Name 2","city":"Cracow","updated":null,"numbers":null},{"id":4,"firsName":"Name 4","city":"Cracow","updated":null,"numbers":null},{"id":6,"firsName":"Name 6","city":"Cracow","updated":null,"numbers":null},{"id":8,"firsName":"Name 8","city":"Cracow","updated":null,"numbers":null},{"id":1,"firsName":"Name 1","city":"Warsaw","updated":null,"numbers":null},{"id":3,"firsName":"Name 3","city":"Warsaw","updated":null,"numbers":null},{"id":5,"firsName":"Name 5","city":"Warsaw","updated":null,"numbers":null},{"id":7,"firsName":"Name 7","city":"Warsaw","updated":null,"numbers":null},{"id":9,"firsName":"Name 9","city":"Warsaw","updated":null,"numbers":null}]
 
+}
+
+func TestProvider_UnMarshall(t *testing.T) {
+	testCases := []struct {
+		description    string
+		json           []byte
+		fields         map[string]interface{}
+		expectedValues map[string]interface{}
+	}{
+		{
+			description: "unmarshalling",
+			fields: map[string]interface{}{
+				"Id":    0,
+				"Name":  "",
+				"Price": 0.5,
+			},
+			json: []byte(`{
+				"Id": 1,
+				"Name": "Foo"
+			}`),
+			expectedValues: map[string]interface{}{
+				"Id":   1,
+				"Name": "Foo",
+			},
+		},
+	}
+
+	for i, testCase := range testCases {
+		provider := gtly.NewProvider(fmt.Sprintf("testcase#%v", i))
+		addProviderFields(testCase, provider)
+		anObject := provider.UnMarshall(testCase.json)
+		for _, field := range anObject.Proto().Fields() {
+			value, ok := testCase.expectedValues[field.Name]
+			if ok {
+				assert.True(t, anObject.SetAt(field.Index), testCase.description)
+				assert.Equal(t, value, anObject.Value(field.Name), testCase.description)
+			} else {
+				assert.False(t, anObject.SetAt(field.Index), testCase.description)
+			}
+		}
+	}
+}
+
+func addProviderFields(testCase struct {
+	description    string
+	json           []byte
+	fields         map[string]interface{}
+	expectedValues map[string]interface{}
+}, provider *gtly.Provider) {
+	for k, v := range testCase.fields {
+		provider.AddField(&gtly.Field{
+			Name: k,
+			Type: reflect.TypeOf(v),
+		})
+	}
 }

@@ -16,6 +16,4 @@ type Collection interface {
 	Proto() *Proto
 	//First returns first object
 	First() *Object
-	//Compact returns compacted collection representation
-	Compact() *Compacted
 }

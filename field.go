@@ -2,6 +2,7 @@ package gtly
 
 import (
 	"github.com/viant/toolbox"
+	"github.com/viant/xunsafe"
 	"reflect"
 	"time"
 )
@@ -13,15 +14,19 @@ var NilValue = make([]*interface{}, 1)[0]
 type Field struct {
 	Name          string `json:",omitempty"`
 	Index         int
-	OmitEmpty     *bool  `json:",omitempty"`
-	DateFormat    string `json:",omitempty"`
-	DataLayout    string `json:",omitempty"`
-	DataType      string `json:",omitempty"`
-	InputName     string `json:",omitempty"`
-	ComponentType string `json:",omitempty"`
+	StructTag     reflect.StructTag
+	OmitEmpty     *bool        `json:",omitempty"`
+	DateFormat    string       `json:",omitempty"`
+	DataLayout    string       `json:",omitempty"`
+	DataType      string       `json:",omitempty"`
+	InputName     string       `json:",omitempty"`
+	ComponentType string       `json:",omitempty"`
+	Type          reflect.Type `json:"-"`
 	provider      *Provider
+	xField        *xunsafe.Field
 	outputName    string
 	hidden        bool
+	kind          reflect.Kind
 }
 
 //IsEmpty returns true if field value is empty
@@ -135,34 +140,6 @@ func (f *Field) InitType(value interface{}) {
 		return
 	}
 
-}
-
-//Set sets a field value
-func (f *Field) Set(value interface{}, result *[]interface{}) {
-	if value != nil {
-		if toolbox.IsSlice(value) {
-			slice := toolbox.AsSlice(value)
-			if len(slice) > 0 && toolbox.IsMap(slice[0]) {
-				value = f.provider.NewArray(slice...)
-			}
-
-		} else if toolbox.IsMap(value) {
-			object := f.provider.NewObject()
-			object.Init(toolbox.AsMap(value))
-		}
-	}
-	f.SetValue(value, result)
-}
-
-//SetValue sets field value
-func (f *Field) SetValue(value interface{}, result *[]interface{}) {
-	if value == nil {
-		value = NilValue
-	}
-	values := *result
-	values = reallocateIfNeeded(f.Index+1, values)
-	values[f.Index] = value
-	*result = values
 }
 
 //OutputName returns field output Name
