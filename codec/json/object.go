@@ -16,10 +16,10 @@ type Object struct {
 func (o Object) MarshalJSONObject(enc *gojay.Encoder) {
 	fields := o.Proto().Fields()
 	for _, field := range fields {
-		value := o.ValueAt(field.Index)
+		value, _ := o.ValueAt(field.Index)
 		omitEmpty := field.ShallOmitEmpty(o.Proto())
 		if omitEmpty {
-			empty := field.IsEmpty(o.Proto(), value)
+			empty := !o.SetAt(field.Index)
 			if empty {
 				continue
 			}

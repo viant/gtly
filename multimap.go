@@ -1,89 +1,92 @@
 package gtly
 
-//Multimap represents generic  multi map
+//Multimap represents generic multi map
 type Multimap struct {
-	_proto *Proto
-	_map   map[string][][]interface{}
-	index  Index
+	_provider *Provider
+	_map        map[interface{}][]*Object
+	keyProvider KeyProvider
 }
 
 //Proto returns multimap _proto
 func (m *Multimap) Proto() *Proto {
-	return m._proto
+	return m._provider.Proto
+}
+
+//Range calls handler with every slice element
+func (m *Multimap) Range(handler func(item interface{}) (bool, error)) error {
+	cont := true
+	var err error
+	for _, values := range m._map {
+		for _, value := range values {
+			cont, err = handler(value)
+			if !cont || err != nil {
+				return err
+			}
+		}
+		if !cont || err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+//Objects call handler for every object in this collection
+func (m *Multimap) Objects(handler func(item *Object) (bool, error)) error {
+	cont := true
+	var err error
+	for _, values := range m._map {
+		for _, value := range values {
+			cont, err = handler(value)
+			if !cont || err != nil {
+				return err
+			}
+		}
+		if !cont || err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 //First returns an element from multimap
-func (m Multimap) First() *Object {
+func (m *Multimap) First() *Object {
 	if m.Size() == 0 {
 		return nil
 	}
-	for _, v := range m._map {
-		return &Object{_proto: m._proto, _data: v[0]}
+
+	for _, values := range m._map {
+		for _, v := range values {
+			return v
+		}
 	}
 	return nil
 }
 
 //Add add item to a map
 func (m *Multimap) Add(values map[string]interface{}) {
-	object := &Object{_proto: m._proto, _data: make([]interface{}, 0)}
+	object := m._provider.NewObject()
 	object.Init(values)
-	key := m.index(values)
+	key := m.keyProvider(object)
 	if _, ok := m._map[key]; !ok {
-		m._map[key] = make([][]interface{}, 0)
+		m._map[key] = make([]*Object, 0)
 	}
-	m._map[key] = append(m._map[key], object._data)
+	m._map[key] = append(m._map[key], object)
 }
 
-//AddObject add object into mulaitmap
-func (m *Multimap) AddObject(object *Object) {
-	key := m.index(object)
+//AddObject add object into multimap
+func (m *Multimap) AddObject(o *Object) {
+	key := m.keyProvider(o)
 	if _, ok := m._map[key]; !ok {
-		m._map[key] = make([][]interface{}, 0)
+		m._map[key] = make([]*Object, 0)
 	}
-	m._map[key] = append(m._map[key], object._data)
-}
-
-//Size return slice size
-func (m Multimap) Size() int {
-	return len(m._map)
-}
-
-//Range calls handler with every slice element
-func (m Multimap) Range(handler func(item interface{}) (bool, error)) error {
-	return m.Slices(func(key string, slice *Array) (b bool, err error) {
-		cont := false
-		err = slice.Objects(func(item *Object) (b bool, err error) {
-			cont, err = handler(item.AsMap())
-			return cont, err
-		})
-		return cont && err != nil, err
-	})
-}
-
-//Objects call handler for every object in this collection
-func (m *Multimap) Objects(handler func(item *Object) (bool, error)) error {
-	aMap := m._map
-	next := false
-	var err error
-	for key, item := range aMap {
-		slice := &Array{_proto: m._proto, _data: item}
-		err = slice.Objects(func(item *Object) (b bool, err error) {
-			next, err = handler(item)
-			return next, err
-		})
-		aMap[key] = slice._data
-		if !next || err != nil {
-			break
-		}
-	}
-	return err
+	m._map[key] = append(m._map[key], o)
 }
 
 //Slices iterate over object slice, any update to objects are applied to the slice
-func (m *Multimap) Slices(handler func(key string, value *Array) (bool, error)) error {
+func (m *Multimap) Slices(handler func(key interface{}, value *Array) (bool, error)) error {
 	aMap := m._map
 	for key, item := range aMap {
-		slice := &Array{_proto: m._proto, _data: item}
+		slice := &Array{_provider: m._provider, _data: item}
 		next, err := handler(key, slice)
 		aMap[key] = slice._data
 		if !next || err != nil {
@@ -99,19 +102,16 @@ func (m *Multimap) Slice(key string) *Array {
 	if !ok {
 		return nil
 	}
-	return &Array{_proto: m._proto, _data: data}
+	return &Array{_provider: m._provider, _data: data}
+}
+
+
+//Size return slice size
+func (m *Multimap) Size() int {
+	return len(m._map)
 }
 
 //IsNil returns true if it's nil
-func (m Multimap) IsNil() bool {
+func (m *Multimap) IsNil() bool {
 	return len(m._map) == 0
-}
-
-//Compact returns compacted slice
-func (m Multimap) Compact() *Compacted {
-	result := &Compacted{Fields: m._proto.fields, Data: make([][]interface{}, 0)}
-	for k := range m._map {
-		result.Data = append(result.Data, m._map[k]...)
-	}
-	return result
 }

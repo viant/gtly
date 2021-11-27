@@ -1,167 +1,176 @@
-package gtly
+package gtly_test
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/gtly"
+	"math"
+	"reflect"
 	"testing"
 )
 
-func TestArray_Add(t *testing.T) {
-	var useCases = []struct {
-		description string
-		values      []map[string]interface{}
-	}{
-		{
-			description: "single item value",
-			values: []map[string]interface{}{
-				{
-					"K1": "123",
-					"K2": "123",
-				},
-			},
-		},
-		{
-			description: "single item value",
-			values: []map[string]interface{}{
-				{
-					"K21": "1",
-					"K2":  "2",
-					"K7":  "3",
-				},
-				{
-					"K21": "4",
-					"K2":  "5",
-					"K7":  "",
-				},
-			},
-		},
-	}
-
-	for _, useCase := range useCases {
-
-		provider := NewProvider("foo")
-		anArray := provider.NewArray()
-		for _, v := range useCase.values {
-			anArray.Add(v)
-		}
-		count := 0
-		err := anArray.Objects(func(object *Object) (b bool, err error) {
-			assert.EqualValues(t, useCase.values[count], object.AsMap())
-			count++
-			return true, nil
-		})
-		assert.Nil(t, err, useCase.description)
-		assert.Equal(t, len(useCase.values), count)
-
-	}
-
+type ArrayFieldValue struct {
+	values map[string]interface{}
+	asMap  map[string]interface{}
+	add    AddMethod
 }
 
-func Test_Array_Objects(t *testing.T) {
-	var useCases = []struct {
-		description string
-		values      map[string]interface{}
-		changes     map[string]interface{}
-	}{
-		{
-			description: "single value",
-			values: map[string]interface{}{
-				"k1": "v1",
-				"k2": "v3",
-			},
-			changes: map[string]interface{}{
-				"k1": "v10",
-				"k3": "v3",
-			},
-		},
-	}
-
-	for _, useCase := range useCases {
-		expect := mergeMap(useCase.values, useCase.changes)
-		provider := NewProvider("foo")
-		anArray := provider.NewArray()
-		anArray.Add(useCase.values)
-		assert.EqualValues(t, 1, anArray.Size(), useCase.description)
-
-		anArray.Objects(func(item *Object) (b bool, err error) {
-			for k, v := range useCase.changes {
-				item.SetValue(k, v)
-			}
-			return true, nil
-		})
-
-		count := 0
-		anArray.Objects(func(item *Object) (b bool, err error) {
-			count++
-			assert.EqualValues(t, expect, item.AsMap(), useCase.description)
-			return true, nil
-		})
-
-		assert.EqualValues(t, 1, count, useCase.description)
-
-	}
-
+type ArrayTestCase struct {
+	description  string
+	outputFormat string
+	fields       map[string]interface{}
+	values       []ArrayFieldValue
 }
 
-func TestArray_AddObject(t *testing.T) {
-	var useCases = []struct {
-		description string
-		values      []map[string]interface{}
-	}{
+func TestArray(t *testing.T) {
+	testCases := []ArrayTestCase{
 		{
-			description: "single item value",
-			values: []map[string]interface{}{
+			description:  "as object",
+			outputFormat: gtly.CaseLowerCamel,
+			fields: map[string]interface{}{
+				"Prop1": "",
+				"Prop2": 0,
+				"Prop3": 0.0,
+			},
+			values: []ArrayFieldValue{
 				{
-					"K1": "123",
-					"K2": "123",
+					values: map[string]interface{}{
+						"Prop1": "abc",
+						"Prop2": 1,
+						"Prop3": 4.0,
+					},
+					asMap: map[string]interface{}{
+						"prop1": "abc",
+						"prop2": 1,
+						"prop3": 4.0,
+					},
+					add: AsObject,
+				},
+				{
+					values: map[string]interface{}{
+						"Prop1": "cdef",
+						"Prop2": 2,
+						"Prop3": 8.0,
+					},
+					add: AsObject,
+					asMap: map[string]interface{}{
+						"prop1": "cdef",
+						"prop2": 2,
+						"prop3": 8.0,
+					},
 				},
 			},
 		},
 		{
-			description: "single item value",
-			values: []map[string]interface{}{
+			description:  "as map",
+			outputFormat: gtly.CaseLowerCamel,
+			fields: map[string]interface{}{
+				"Prop1": "",
+				"Prop2": 0,
+				"Prop3": 0.0,
+			},
+			values: []ArrayFieldValue{
 				{
-					"K21": "1",
-					"K2":  "2",
-					"K7":  "3",
+					values: map[string]interface{}{
+						"Prop1": "abc",
+						"Prop2": 1,
+						"Prop3": 4.0,
+					},
+					add: AsMap,
+					asMap: map[string]interface{}{
+						"prop1": "abc",
+						"prop2": 1,
+						"prop3": 4.0,
+					},
 				},
 				{
-					"K21": "4",
-					"K2":  "5",
-					"K7":  "",
+					values: map[string]interface{}{
+						"Prop1": "cdef",
+						"Prop2": 2,
+						"Prop3": 8.0,
+					},
+					add: AsMap,
+					asMap: map[string]interface{}{
+						"prop1": "cdef",
+						"prop2": 2,
+						"prop3": 8.0,
+					},
 				},
 			},
 		},
 	}
 
-	for _, useCase := range useCases {
-
-		provider := NewProvider("foo")
-		anArray := provider.NewArray()
-		for _, v := range useCase.values {
-			anArray.Add(v)
-		}
-
-		compacted := anArray.Compact()
-
-		array2 := NewProvider("foo").NewArray()
-		compacted.Update(array2)
-		count := 0
-		array2.Objects(func(object *Object) (b bool, err error) {
-			assert.EqualValues(t, useCase.values[count], object.AsMap())
-			count++
-			return true, nil
-		})
-		assert.Equal(t, len(useCase.values), count)
-
+	for i, testCase := range testCases {
+		provider := gtly.NewProvider(fmt.Sprintf("test case #%v", i))
+		addSliceProviderFields(testCase.fields, provider)
+		provider.OutputCaseFormat(gtly.CaseUpperCamel, testCase.outputFormat)
+		slice := provider.NewArray()
+		addToSlice(testCase, provider, slice)
+		assert.Equal(t, slice.Size(), len(testCase.values), testCase.description)
+		assert.Equal(t, provider.Proto, slice.Proto(), testCase.description)
+		checkSliceObjects(t, testCase, slice, len(testCase.values))
+		checkSliceObjects(t, testCase, slice, int(math.Ceil(float64(len(testCase.values))/2)))
+		checkSliceRange(t, testCase, slice, len(testCase.values))
+		checkSliceFirstElement(t, testCase, slice)
 	}
 }
 
-func mergeMap(maps ...map[string]interface{}) map[string]interface{} {
-	expect := map[string]interface{}{}
-	for _, aMap := range maps {
-		for k, v := range aMap {
-			expect[k] = v
+func checkSliceRange(t *testing.T, testCase ArrayTestCase, slice *gtly.Array, n int) {
+	counter := 0
+	err := slice.Range(func(item interface{}) (bool, error) {
+		assert.Equal(t, testCase.values[counter].asMap, item.(*gtly.Object).AsMap())
+		counter++
+		return counter != n, nil
+	})
+	assert.Equal(t, n, counter, testCase.description)
+	assert.Nil(t, err, testCase.description)
+}
+
+func checkSliceObjects(t *testing.T, testCase ArrayTestCase, slice *gtly.Array, n int) {
+	counter := 0
+	err := slice.Objects(func(item *gtly.Object) (bool, error) {
+		assert.Equal(t, testCase.values[counter].asMap, item.AsMap())
+		counter++
+		return counter != n, nil
+	})
+	assert.Equal(t, n, counter, testCase.description)
+	assert.Nil(t, err, testCase.description)
+}
+
+func checkSliceFirstElement(t *testing.T, testCase ArrayTestCase, slice *gtly.Array) {
+	if len(testCase.values) == 0 {
+		assert.Equal(t, nil, slice.First(), testCase.description)
+	} else {
+		assert.Equal(t, testCase.values[0].asMap, slice.First().AsMap(), testCase.description)
+	}
+}
+
+func addToSlice(testCase ArrayTestCase, provider *gtly.Provider, slice *gtly.Array) {
+	for _, obj := range testCase.values {
+		switch obj.add {
+		case AsObject:
+			anObject := provider.NewObject()
+			initObjectValues(obj.values, anObject)
+			slice.AddObject(anObject)
+		case AsMap:
+			slice.Add(obj.values)
+		default:
+			panic(fmt.Errorf("not implemented add method: %v", obj.add))
 		}
 	}
-	return expect
+}
+
+func initObjectValues(values map[string]interface{}, object *gtly.Object) {
+	for k, v := range values {
+		object.SetValue(k, v)
+	}
+}
+
+func addSliceProviderFields(fields map[string]interface{}, provider *gtly.Provider) {
+	for k, v := range fields {
+		provider.AddField(&gtly.Field{
+			Name: k,
+			Type: reflect.TypeOf(v),
+		})
+	}
 }

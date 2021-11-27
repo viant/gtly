@@ -1,60 +1,87 @@
-package gtly
+package gtly_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/gtly"
+	"reflect"
 	"testing"
 )
 
-func TestMultimap_Slice(t *testing.T) {
+type MultimapTestCase struct {
+	description string
+	fields      map[string]interface{}
+	multiValues []map[string]interface{}
+	uniqueField string
+	size        int
+	slicesLen   map[interface{}]int
+	isNil       bool
+}
 
-	var useCases = []struct {
-		description string
-		index       Index
-		values      []map[string]interface{}
-		expectSizes map[string]int
-	}{
+func TestMultimap(t *testing.T) {
+	testCases := []MultimapTestCase{
 		{
-			description: "single field  imdex",
-			values: []map[string]interface{}{
+			description: "single values",
+			uniqueField: "Prop1",
+			size:        2,
+			isNil: false,
+			fields: map[string]interface{}{
+				"Prop1": "",
+				"Prop2": 0,
+				"Prop3": 1.0,
+			},
+			multiValues: []map[string]interface{}{
 				{
-					"k1": "v1",
-					"k2": "v01",
+					"Prop1": "abc",
+					"Prop2": 1,
+					"Prop3": 2.0,
 				},
 				{
-					"k1": "v1",
-					"k2": "v02",
-				},
-				{
-					"k1": "v1",
-					"k2": "v02",
-				},
-				{
-					"k1": "v2",
-					"k2": "v22",
+					"Prop1": "abcd",
+					"Prop2": 1,
+					"Prop3": 2.0,
 				},
 			},
-			expectSizes: map[string]int{
-				"v1": 3,
-				"v2": 1,
+			slicesLen: map[interface{}]int{
+				"abc":  1,
+				"abcd": 1,
 			},
-			index: NewIndex([]string{"k1"}),
 		},
 	}
 
-	for _, useCase := range useCases {
-		provider := NewProvider("foo")
-		aMap := provider.NewMultimap(useCase.index)
-		for _, item := range useCase.values {
-			aMap.Add(item)
-		}
-
-		for _, item := range useCase.values {
-			key := useCase.index(item)
-			slice := aMap.Slice(key)
-			expectSize := useCase.expectSizes[key]
-			assert.EqualValues(t, expectSize, slice.Size(), useCase.description)
-		}
-
+	for _, testCase := range testCases {
+		provider := gtly.NewProvider("")
+		initMultimapFields(testCase, provider)
+		multiMap := provider.NewMultimap(gtly.NewKeyProvider(testCase.uniqueField))
+		initMultimapValues(testCase, provider, multiMap)
+		assert.Equal(t, testCase.size, multiMap.Size(), testCase.description)
+		assert.Equal(t, testCase.isNil, multiMap.IsNil())
+		assert.True(t, testCase.slicesLen[multiMap.First().Value(testCase.uniqueField)] != 0, testCase.description)
+		checkMultimapRange(t, testCase, multiMap)
 	}
+}
 
+func checkMultimapRange(t *testing.T, testCase MultimapTestCase, multiMap *gtly.Multimap) {
+	counter := 0
+	multiMap.Range(func(item interface{}) (bool, error) {
+		counter++
+		return true, nil
+	})
+	assert.Equal(t, counter, len(testCase.multiValues), testCase.description)
+}
+
+func initMultimapValues(testCase MultimapTestCase, provider *gtly.Provider, multiMap *gtly.Multimap) {
+	for _, values := range testCase.multiValues {
+		anObject := provider.NewObject()
+		anObject.Init(values)
+		multiMap.AddObject(anObject)
+	}
+}
+
+func initMultimapFields(testCase MultimapTestCase, provider *gtly.Provider) {
+	for k, v := range testCase.fields {
+		provider.AddField(&gtly.Field{
+			Type: reflect.TypeOf(v),
+			Name: k,
+		})
+	}
 }
