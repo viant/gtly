@@ -5,6 +5,7 @@ import (
 	"github.com/francoispqt/gojay"
 	"github.com/viant/assertly"
 	"github.com/viant/gtly"
+	"github.com/viant/toolbox/format"
 	"reflect"
 	"testing"
 )
@@ -15,8 +16,8 @@ func TestObject_MarshalJSONObject(t *testing.T) {
 		fields           map[string]interface{}
 		values           map[string]interface{}
 		result           map[string]interface{}
-		outputFormat     string
-		sourceCaseFormat string
+		outputFormat     format.Case
+		sourceCaseFormat format.Case
 	}{
 		{
 			description: "marshal all fields",
@@ -35,8 +36,8 @@ func TestObject_MarshalJSONObject(t *testing.T) {
 				"name":  "Foo",
 				"price": 10.5,
 			},
-			outputFormat:     gtly.CaseLowerCamel,
-			sourceCaseFormat: gtly.CaseUpper,
+			outputFormat:     format.CaseLowerCamel,
+			sourceCaseFormat: format.CaseUpper,
 		},
 		{
 			description: "marshal fields which were set",
@@ -53,8 +54,8 @@ func TestObject_MarshalJSONObject(t *testing.T) {
 				"id":   1,
 				"name": "Foo",
 			},
-			outputFormat:     gtly.CaseLowerCamel,
-			sourceCaseFormat: gtly.CaseUpper,
+			outputFormat:     format.CaseLowerCamel,
+			sourceCaseFormat: format.CaseUpper,
 		},
 	}
 

@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/gtly"
 	"github.com/viant/gtly/codec/json"
+	"github.com/viant/toolbox/format"
 	"log"
 	"reflect"
 	"testing"
@@ -32,11 +33,11 @@ func ExampleProvider_NewObject() {
 		log.Fatal(err)
 	}
 	fmt.Printf("%s\n", JSON)
-	fooProvider.OutputCaseFormat(gtly.CaseLowerCamel, gtly.CaseUpperUnderscore)
+	fooProvider.OutputCaseFormat(format.CaseLower, format.CaseUpperUnderscore)
 	JSON, _ = json.Marshal(foo1)
 	fmt.Printf("%s\n", JSON)
 
-	fooProvider.OutputCaseFormat(gtly.CaseLowerCamel, gtly.CaseLowerUnderscore)
+	fooProvider.OutputCaseFormat(format.CaseLower, format.CaseLowerUnderscore)
 	foo1.SetValue("active", true)
 	foo1.SetValue("description", "some description")
 

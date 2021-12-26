@@ -1,7 +1,9 @@
 package gtly
 
+//KeyProvider represents a key provider
 type KeyProvider func(o *Object) interface{}
 
+//NewKeyProvider creates a key provider
 func NewKeyProvider(fieldName string) KeyProvider {
 	uniqueKeyIndex := 0
 	wasKeyProduced := false

@@ -64,7 +64,7 @@ func initKeyProducerProvider(testCase struct {
 var anObject *Object
 var keyProvider func(o *Object) interface{}
 
-func init()  {
+func init() {
 	provider := NewProvider("")
 	provider.AddField(&Field{
 		Type: reflect.TypeOf(interface{}("")),
@@ -76,7 +76,7 @@ func init()  {
 	})
 	anObject = provider.NewObject()
 	anObject.Init(map[string]interface{}{
-		"Id": "123",
+		"Id":   "123",
 		"Name": "John",
 	})
 	keyProvider = NewKeyProvider("Id")

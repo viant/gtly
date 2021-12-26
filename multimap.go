@@ -2,7 +2,7 @@ package gtly
 
 //Multimap represents generic multi map
 type Multimap struct {
-	_provider *Provider
+	_provider   *Provider
 	_map        map[interface{}][]*Object
 	keyProvider KeyProvider
 }
@@ -104,7 +104,6 @@ func (m *Multimap) Slice(key string) *Array {
 	}
 	return &Array{_provider: m._provider, _data: data}
 }
-
 
 //Size return slice size
 func (m *Multimap) Size() int {

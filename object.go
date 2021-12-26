@@ -19,6 +19,7 @@ func (o *Object) Proto() *Proto {
 	return o._proto
 }
 
+//StructValue returns a struct value
 func (o *Object) StructValue() interface{} {
 	return o.value.Elem().Interface()
 }
@@ -67,6 +68,7 @@ func (o *Object) SetValue(fieldName string, value interface{}) {
 	o.markFieldSet(field.Index)
 }
 
+//Mutator returns field mutator
 func (o *Object) Mutator(fieldName string) func(value interface{}) {
 	field := o._proto.Field(fieldName)
 	XField := field.xField
@@ -76,6 +78,7 @@ func (o *Object) Mutator(fieldName string) func(value interface{}) {
 	}
 }
 
+//Accessor returns a field mutator
 func (o *Object) Accessor(fieldName string) func() interface{} {
 	field := o._proto.Field(fieldName)
 	XField := field.xField
@@ -84,6 +87,7 @@ func (o *Object) Accessor(fieldName string) func() interface{} {
 	}
 }
 
+//IntMutator returns an int mutator
 func (o *Object) IntMutator(fieldName string) func(value int) {
 	field := o._proto.Field(fieldName)
 	XField := field.xField
@@ -93,6 +97,7 @@ func (o *Object) IntMutator(fieldName string) func(value int) {
 	}
 }
 
+//IntAccessor returns an int accessor
 func (o *Object) IntAccessor(fieldName string) func() int {
 	field := o._proto.Field(fieldName)
 	XField := field.xField
@@ -101,6 +106,7 @@ func (o *Object) IntAccessor(fieldName string) func() int {
 	}
 }
 
+//FloatMutator returns a float mutator
 func (o *Object) FloatMutator(fieldName string) func(value float64) {
 	field := o._proto.Field(fieldName)
 	XField := field.xField
@@ -110,6 +116,7 @@ func (o *Object) FloatMutator(fieldName string) func(value float64) {
 	}
 }
 
+//FloatAccessor returns a float accesor
 func (o *Object) FloatAccessor(fieldName string) func() float64 {
 	field := o._proto.Field(fieldName)
 	XField := field.xField
@@ -118,6 +125,7 @@ func (o *Object) FloatAccessor(fieldName string) func() float64 {
 	}
 }
 
+//StringMutator returns a string mutator
 func (o *Object) StringMutator(fieldName string) func(value string) {
 	field := o._proto.Field(fieldName)
 	XField := field.xField
@@ -127,6 +135,7 @@ func (o *Object) StringMutator(fieldName string) func(value string) {
 	}
 }
 
+//StringAccessor returns string accessor
 func (o *Object) StringAccessor(fieldName string) func() string {
 	field := o._proto.Field(fieldName)
 	XField := field.xField
@@ -135,6 +144,7 @@ func (o *Object) StringAccessor(fieldName string) func() string {
 	}
 }
 
+//
 func (o *Object) BoolMutator(fieldName string) func(value bool) {
 	field := o._proto.Field(fieldName)
 	XField := field.xField

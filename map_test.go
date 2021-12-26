@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/gtly"
+	"github.com/viant/toolbox/format"
 	"reflect"
 	"testing"
 )
@@ -14,7 +15,7 @@ type MapTestCase struct {
 	uniqueField    string
 	mapUniqueField string
 	values         []MapFieldValues
-	outputFormat   string
+	outputFormat   format.Case
 }
 
 type MapFieldValues struct {
@@ -29,7 +30,7 @@ func TestMap(t *testing.T) {
 	testCases := []MapTestCase{
 		{
 			description:    "as object",
-			outputFormat:   gtly.CaseLowerCamel,
+			outputFormat:   format.CaseLowerCamel,
 			uniqueField:    "Id",
 			mapUniqueField: "id",
 			fields: map[string]interface{}{
@@ -116,7 +117,7 @@ func initMapProvider(testCase MapTestCase, provider *gtly.Provider) {
 			Name: k,
 		})
 	}
-	provider.OutputCaseFormat(gtly.CaseUpperCamel, testCase.outputFormat)
+	provider.OutputCaseFormat(format.CaseUpperCamel, testCase.outputFormat)
 }
 
 func checkMapFirstElement(t *testing.T, testCase MapTestCase, aMap *gtly.Map) {

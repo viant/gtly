@@ -23,7 +23,7 @@ func TestMultimap(t *testing.T) {
 			description: "single values",
 			uniqueField: "Prop1",
 			size:        2,
-			isNil: false,
+			isNil:       false,
 			fields: map[string]interface{}{
 				"Prop1": "",
 				"Prop2": 0,

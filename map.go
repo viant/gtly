@@ -41,17 +41,19 @@ func (m *Map) PutObject(key interface{}, object *Object) {
 	m._map[key] = object
 }
 
+//AddObject adds object
 func (m *Map) AddObject(obj *Object) {
 	m._map[m.keyProvider(obj)] = obj
 }
 
+//Add adds object from a map
 func (m *Map) Add(values map[string]interface{}) {
 	anObject := m._provider.NewObject()
 	anObject.Init(values)
 	m._map[m.keyProvider(anObject)] = anObject
 }
 
-//First return a first map elements
+//First return the first map elements
 func (m *Map) First() *Object {
 	if m.Size() == 0 {
 		return nil

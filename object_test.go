@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/gtly"
+	"github.com/viant/toolbox/format"
 	"reflect"
 	"testing"
 	"time"
@@ -23,7 +24,7 @@ type ObjTestCase struct {
 	description      string
 	fields           map[string]ObjectTestField
 	isNil            bool
-	outputCaseFormat string
+	outputCaseFormat format.Case
 	asMap            map[string]interface{}
 }
 
@@ -38,7 +39,7 @@ type ObjectTestField struct {
 func TestObject(t *testing.T) {
 	testCases := []ObjTestCase{
 		{
-			outputCaseFormat: gtly.CaseLowerCamel,
+			outputCaseFormat: format.CaseLowerCamel,
 			description:      "set by value",
 			fields: map[string]ObjectTestField{
 				"Prop1": {
@@ -89,7 +90,7 @@ func TestObject(t *testing.T) {
 		},
 		{
 			description:      "initialize object",
-			outputCaseFormat: gtly.CaseLowerCamel,
+			outputCaseFormat: format.CaseLowerCamel,
 			fields: map[string]ObjectTestField{
 				"Prop1": {
 					value:       "abc",
@@ -133,7 +134,7 @@ func TestObject(t *testing.T) {
 		},
 		{
 			description:      "set by interface mutator",
-			outputCaseFormat: gtly.CaseLowerCamel,
+			outputCaseFormat: format.CaseLowerCamel,
 			fields: map[string]ObjectTestField{
 				"Prop1": {
 					value:       "abc",
@@ -176,7 +177,7 @@ func TestObject(t *testing.T) {
 			},
 		},
 		{
-			outputCaseFormat: gtly.CaseUpperCamel,
+			outputCaseFormat: format.CaseUpperCamel,
 			description:      "set by type mutator",
 			fields: map[string]ObjectTestField{
 				"Prop1": {
@@ -221,7 +222,7 @@ func TestObject(t *testing.T) {
 		},
 		{
 			description:      "initialize and set",
-			outputCaseFormat: gtly.CaseUpper,
+			outputCaseFormat: format.CaseUpper,
 			fields: map[string]ObjectTestField{
 				"Prop1": {
 					value:       "abc",
@@ -300,7 +301,7 @@ func TestObject(t *testing.T) {
 		},
 		{
 			description:      "nil object",
-			outputCaseFormat: gtly.CaseLowerCamel,
+			outputCaseFormat: format.CaseLowerCamel,
 			fields: map[string]ObjectTestField{
 				"Prop1": {
 					value:       "abc",
@@ -355,7 +356,7 @@ func initObjectProviderFields(testCase ObjTestCase, provider *gtly.Provider) {
 			provider.Hide(field.Name)
 		}
 	}
-	provider.OutputCaseFormat(gtly.CaseUpperCamel, testCase.outputCaseFormat)
+	provider.OutputCaseFormat(format.CaseUpper, testCase.outputCaseFormat)
 }
 
 func checkObjectValues(t *testing.T, values map[string]ObjectTestField, object *gtly.Object, description string) {

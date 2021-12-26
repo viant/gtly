@@ -3,7 +3,7 @@ package gtly
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/format"
 	"github.com/viant/xunsafe"
 	"reflect"
 	"strings"
@@ -26,9 +26,9 @@ type Proto struct {
 	OmitEmpty        bool
 	emptyValues      map[interface{}]bool
 	timeLayout       string
-	caseFormat       int
-	outputCaseFormat int
-	inputCaseFormat  int
+	caseFormat       format.Case
+	outputCaseFormat format.Case
+	inputCaseFormat  format.Case
 	dataType         reflect.Type
 	kind             reflect.Kind
 }
@@ -88,32 +88,18 @@ func (p *Proto) SetEmptyValues(values ...interface{}) {
 }
 
 //OutputCaseFormat set output case format
-func (p *Proto) OutputCaseFormat(source, output string) error {
-	var ok bool
-	p.caseFormat, ok = CaseFormat[source]
-	if !ok {
-		return errors.Errorf("invalid case format: %v", source)
-	}
-	p.outputCaseFormat, ok = CaseFormat[output]
-	if !ok {
-		return errors.Errorf("invalid output case format: %v", output)
-	}
+func (p *Proto) OutputCaseFormat(source, output format.Case) error {
 	for i, field := range p.fields {
-		p.fields[i].outputName = toolbox.ToCaseFormat(field.Name, p.caseFormat, p.outputCaseFormat)
+		p.fields[i].outputName = source.Format(field.Name, output)
 	}
 	return nil
 }
 
 //InputCaseFormat set output case format
-func (p *Proto) InputCaseFormat(source, input string) error {
-	var ok bool
-	p.caseFormat, ok = CaseFormat[source]
-	if !ok {
-		return errors.Errorf("invalid case format: %v", source)
-	}
-	p.inputCaseFormat, ok = CaseFormat[input]
-	if !ok {
-		return errors.Errorf("invalid input case format: %v", input)
+func (p *Proto) InputCaseFormat(source, input format.Case) error {
+	p.inputCaseFormat = source
+	for i, field := range p.fields {
+		p.fields[i].outputName = source.Format(field.Name, input)
 	}
 	return nil
 }
@@ -218,7 +204,7 @@ func (p *Proto) FieldWithValue(fieldName string, value interface{}) *Field {
 	field = &Field{Name: fieldName, Index: len(p.fieldNames)}
 	if p.inputCaseFormat != p.caseFormat {
 		field.InputName = field.Name
-		field.Name = toolbox.ToCaseFormat(fieldName, p.inputCaseFormat, p.caseFormat)
+		field.Name = p.inputCaseFormat.Format(fieldName, p.caseFormat)
 	}
 	field.InitType(value)
 	if value == nil {
@@ -236,7 +222,7 @@ func (p *Proto) AddField(field *Field) *Field {
 		panic(fmt.Sprintf("proto has been already in use"))
 	}
 	if p.caseFormat != p.outputCaseFormat {
-		field.outputName = toolbox.ToCaseFormat(field.Name, p.caseFormat, p.outputCaseFormat)
+		field.outputName = p.caseFormat.Format(field.Name, p.outputCaseFormat)
 	}
 	p.fieldNames[field.Name] = field
 	if field.InputName != "" {

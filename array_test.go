@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/gtly"
+	"github.com/viant/toolbox/format"
 	"math"
 	"reflect"
 	"testing"
@@ -17,7 +18,7 @@ type ArrayFieldValue struct {
 
 type ArrayTestCase struct {
 	description  string
-	outputFormat string
+	outputFormat format.Case
 	fields       map[string]interface{}
 	values       []ArrayFieldValue
 }
@@ -26,7 +27,7 @@ func TestArray(t *testing.T) {
 	testCases := []ArrayTestCase{
 		{
 			description:  "as object",
-			outputFormat: gtly.CaseLowerCamel,
+			outputFormat: format.CaseLowerCamel,
 			fields: map[string]interface{}{
 				"Prop1": "",
 				"Prop2": 0,
@@ -63,7 +64,7 @@ func TestArray(t *testing.T) {
 		},
 		{
 			description:  "as map",
-			outputFormat: gtly.CaseLowerCamel,
+			outputFormat: format.CaseLowerCamel,
 			fields: map[string]interface{}{
 				"Prop1": "",
 				"Prop2": 0,
@@ -103,7 +104,7 @@ func TestArray(t *testing.T) {
 	for i, testCase := range testCases {
 		provider := gtly.NewProvider(fmt.Sprintf("test case #%v", i))
 		addSliceProviderFields(testCase.fields, provider)
-		provider.OutputCaseFormat(gtly.CaseUpperCamel, testCase.outputFormat)
+		provider.OutputCaseFormat(format.CaseUpperCamel, testCase.outputFormat)
 		slice := provider.NewArray()
 		addToSlice(testCase, provider, slice)
 		assert.Equal(t, slice.Size(), len(testCase.values), testCase.description)

@@ -7,23 +7,23 @@ type Array struct {
 }
 
 //AddObject add elements to a slice
-func (s *Array) AddObject(object *Object) {
-	s._data = append(s._data, object)
+func (a *Array) AddObject(object *Object) {
+	a._data = append(a._data, object)
 }
 
 //Size return slice size
-func (s *Array) Size() int {
-	return len(s._data)
+func (a *Array) Size() int {
+	return len(a._data)
 }
 
 //Proto returns slice _proto
-func (s *Array) Proto() *Proto {
-	return s._provider.Proto
+func (a *Array) Proto() *Proto {
+	return a._provider.Proto
 }
 
 //Range calls handler with every slice element
-func (m *Array) Range(handler func(item interface{}) (bool, error)) error {
-	for _, v := range m._data {
+func (a *Array) Range(handler func(item interface{}) (bool, error)) error {
+	for _, v := range a._data {
 		cont, err := handler(v)
 
 		if !cont || err != nil {
@@ -34,8 +34,8 @@ func (m *Array) Range(handler func(item interface{}) (bool, error)) error {
 }
 
 //Objects call handler for every object in this collection
-func (m *Array) Objects(handler func(item *Object) (bool, error)) error {
-	for _, v := range m._data {
+func (a *Array) Objects(handler func(item *Object) (bool, error)) error {
+	for _, v := range a._data {
 		cont, err := handler(v)
 
 		if !cont || err != nil {
@@ -45,18 +45,17 @@ func (m *Array) Objects(handler func(item *Object) (bool, error)) error {
 	return nil
 }
 
-//AddObject adds object
-func (s *Array) Add(value map[string]interface{}) {
-	anObject := s._provider.NewObject()
+//Add adds object
+func (a *Array) Add(value map[string]interface{}) {
+	anObject := a._provider.NewObject()
 	anObject.Init(value)
-	s._data = append(s._data, anObject)
+	a._data = append(a._data, anObject)
 }
 
-//First returns first element on the slice
-func (s *Array) First() *Object {
-	if s.Size() == 0 {
+//First returns the first element on the slice
+func (a *Array) First() *Object {
+	if a.Size() == 0 {
 		return nil
-	} else {
-		return s._data[0]
 	}
+	return a._data[0]
 }
