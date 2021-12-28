@@ -76,6 +76,16 @@ func (o *Object) SetValue(fieldName string, value interface{}) {
 //Mutator returns field mutator
 func (o *Object) Mutator(fieldName string) func(value interface{}) {
 	field := o.proto.Field(fieldName)
+	return o.mutator(field)
+}
+
+//MutatorAt returns field mutator
+func (o *Object) MutatorAt(index int) func(value interface{}) {
+	field := o.proto.FieldAt(index)
+	return o.mutator(field)
+}
+
+func (o *Object) mutator(field *Field) func(value interface{}) {
 	xField := field.xField
 	switch field.Type.Kind() {
 	case reflect.Int, reflect.String, reflect.Bool, reflect.Float64, reflect.Float32, reflect.Int64:
