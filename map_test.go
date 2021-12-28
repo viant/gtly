@@ -124,7 +124,7 @@ func checkMapFirstElement(t *testing.T, testCase MapTestCase, aMap *gtly.Map) {
 	if len(testCase.values) == 0 {
 		assert.Nil(t, aMap.First(), testCase.description)
 	} else {
-		assert.NotNilf(t, aMap.First().AsMap(), testCase.description)
+		assert.NotNil(t, aMap.First().AsMap(), testCase.description)
 	}
 }
 

@@ -7,7 +7,7 @@ type Multimap struct {
 	keyProvider KeyProvider
 }
 
-//Proto returns multimap _proto
+//Proto returns multimap proto
 func (m *Multimap) Proto() *Proto {
 	return m._provider.Proto
 }
@@ -71,6 +71,7 @@ func (m *Multimap) Add(values map[string]interface{}) {
 		m._map[key] = make([]*Object, 0)
 	}
 	m._map[key] = append(m._map[key], object)
+	return
 }
 
 //AddObject add object into multimap

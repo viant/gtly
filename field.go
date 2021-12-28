@@ -119,11 +119,11 @@ func (f *Field) InitType(value interface{}) {
 		f.provider = &Provider{Proto: val.Proto()}
 		return
 	case time.Time, *time.Time, **time.Time, string, []byte:
-		f.DataType = getBaseType(value)
+		f.DataType = getBaseTypeName(value)
 		return
 
 	default:
-		f.DataType = getBaseType(value)
+		f.DataType = getBaseTypeName(value)
 	}
 
 	if toolbox.IsMap(value) || toolbox.IsStruct(value) {
@@ -136,7 +136,7 @@ func (f *Field) InitType(value interface{}) {
 		f.DataType = FieldTypeArray
 		componentType := toolbox.DiscoverComponentType(value)
 		componentValue := reflect.New(componentType).Interface()
-		f.ComponentType = getBaseType(componentValue)
+		f.ComponentType = getBaseTypeName(componentValue)
 		return
 	}
 
@@ -171,6 +171,9 @@ func NewField(name, dataType string, options ...Option) *Field {
 	}
 	for _, option := range options {
 		option(field)
+	}
+	if field.Type == nil {
+		field.Type = getBaseType(field.DataType)
 	}
 	return field
 }

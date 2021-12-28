@@ -30,35 +30,44 @@ type Proto struct {
 	outputCaseFormat format.Case
 	inputCaseFormat  format.Case
 	dataType         reflect.Type
+	xType            *xunsafe.Type
 	kind             reflect.Kind
 }
 
 func (p *Proto) Type() reflect.Type {
-	p.buildTypeIfNeeded()
+	return p.ensureType()
+}
+
+func (p *Proto) ensureType() reflect.Type {
+	if p.dataType != nil {
+		return p.dataType
+	}
+	if p.dataType == nil {
+		dataType := p.buildType()
+		p.dataType = dataType
+		p.xType = xunsafe.NewType(p.dataType)
+	}
 	return p.dataType
 }
 
-func (p *Proto) buildTypeIfNeeded() {
-	if p.dataType == nil {
-		p.buildType()
-	}
-}
-
-func (p *Proto) buildType() {
-	fields := p.fields
-	structFields := make([]reflect.StructField, len(fields))
-	for i, field := range fields {
+func (p *Proto) buildType() reflect.Type {
+	structFields := make([]reflect.StructField, len(p.fields))
+	for i, field := range p.fields {
+		if field.Type == nil {
+			field.Type = typeString
+		}
 		structFields[i] = reflect.StructField{
 			Name: field.Name,
 			Type: field.Type,
 		}
-		fields[i].kind = field.Type.Kind()
+		p.fields[i].kind = structFields[i].Type.Kind()
 	}
-	p.dataType = reflect.StructOf(structFields)
-	for i, field := range fields {
-		fields[i].xField = xunsafe.FieldByName(p.dataType, field.Name)
+	dataType := reflect.StructOf(structFields)
+	for i, field := range p.fields {
+		p.fields[i].xField = xunsafe.FieldByName(dataType, field.Name)
 	}
 
+	return dataType
 }
 
 //SimpleName returns simple name
@@ -122,7 +131,7 @@ func (p *Proto) Show(name string) {
 	field.hidden = false
 }
 
-//Size returns _proto size
+//Size returns proto size
 func (p *Proto) Size() int {
 	p.lock.RLock()
 	result := len(p.fields)
@@ -180,7 +189,7 @@ func (p *Proto) Object(values []interface{}) (*Object, error) {
 		return nil, errors.Errorf("invalid value count: %v, field count: %v", len(values), len(p.fields))
 	}
 
-	object := &Object{_proto: p}
+	object := &Object{proto: p}
 	if len(p.nilTypes) > 0 {
 		for _, index := range p.nilTypes {
 			if values[index] != nil {

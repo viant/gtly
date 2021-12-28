@@ -74,7 +74,7 @@ func init() {
 		Type: reflect.TypeOf(interface{}("")),
 		Name: "Name",
 	})
-	anObject = provider.NewObject()
+	anObject := provider.NewObject()
 	anObject.Init(map[string]interface{}{
 		"Id":   "123",
 		"Name": "John",

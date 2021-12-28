@@ -219,7 +219,10 @@ func TestProvider_UnMarshall(t *testing.T) {
 	for i, testCase := range testCases {
 		provider := gtly.NewProvider(fmt.Sprintf("testcase#%v", i))
 		addProviderFields(testCase, provider)
-		anObject := provider.UnMarshall(testCase.json)
+		anObject, err := provider.UnMarshall(testCase.json)
+		if err != nil {
+			log.Fatal(err)
+		}
 		for _, field := range anObject.Proto().Fields() {
 			value, ok := testCase.expectedValues[field.Name]
 			if ok {

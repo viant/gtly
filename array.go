@@ -16,7 +16,7 @@ func (a *Array) Size() int {
 	return len(a._data)
 }
 
-//Proto returns slice _proto
+//Proto returns slice proto
 func (a *Array) Proto() *Proto {
 	return a._provider.Proto
 }
@@ -50,6 +50,7 @@ func (a *Array) Add(value map[string]interface{}) {
 	anObject := a._provider.NewObject()
 	anObject.Init(value)
 	a._data = append(a._data, anObject)
+
 }
 
 //First returns the first element on the slice

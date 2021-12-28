@@ -32,7 +32,7 @@ Gtly complex data type use runtime struct based storage with [Proto](proto.go) r
 An proto instance is shared across all [Object](object.go) and [Collection](collection.go) of the same type.
 Proto control mapping between field and field position withing object, or slice item.
 What's more proto field define field meta data like DateLayout, OutputName controlled by proto CaseFormat dynamically. 
-
+  
 
 ## Usage
 

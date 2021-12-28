@@ -4,24 +4,24 @@ import (
 	"encoding/json"
 	"github.com/pkg/errors"
 	"github.com/viant/toolbox"
+	"github.com/viant/xunsafe"
 	"reflect"
-	"unsafe"
 )
 
-//Provider provides shares _proto data across all dynamic types
+//Provider provides shares proto data across all dynamic types
 type Provider struct {
 	*Proto
 }
 
 //NewObject creates an object
 func (p *Provider) NewObject() *Object {
-	instance := reflect.New(p.Type())
-
+	pType := p.Type()
+	instance := reflect.New(pType)
 	return &Object{
-		value:     instance,
-		_proto:    p.Proto,
-		_dataAddr: unsafe.Pointer(instance.Elem().UnsafeAddr()),
-		_setAt:    make([]bool, len(p.Fields())),
+		value: instance,
+		proto: p.Proto,
+		addr:  xunsafe.ValuePointer(&instance),
+		setAt: make([]bool, len(p.Fields())),
 	}
 }
 
@@ -75,10 +75,13 @@ func NewProvider(name string, fields ...*Field) *Provider {
 	return &Provider{Proto: newProto(name, fields...)}
 }
 
-func (p *Provider) UnMarshall(data []byte) *Object {
+func (p *Provider) UnMarshall(data []byte) (*Object, error) {
 	resultMap := new(map[string]interface{})
-	json.Unmarshal(data, resultMap)
+	err := json.Unmarshal(data, resultMap)
+	if err != nil {
+		return nil, err
+	}
 	anObject := p.NewObject()
 	anObject.Init(*resultMap)
-	return anObject
+	return anObject, err
 }

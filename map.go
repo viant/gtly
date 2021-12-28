@@ -7,7 +7,7 @@ type Map struct {
 	keyProvider KeyProvider
 }
 
-//Proto returns map _proto
+//Proto returns map proto
 func (m *Map) Proto() *Proto {
 	return m._provider.Proto
 }
