@@ -15,7 +15,8 @@ type Object struct {
 //MarshalJSONObject converts an object into JSON object
 func (o Object) MarshalJSONObject(enc *gojay.Encoder) {
 	fields := o.Proto().Fields()
-	for _, field := range fields {
+	for i := range fields {
+		field := &fields[i]
 		value, ok := o.ValueAt(field.Index)
 		omitEmpty := field.ShallOmitEmpty()
 		if omitEmpty && !ok {

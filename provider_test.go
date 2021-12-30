@@ -62,11 +62,15 @@ func ExampleProvider_NewArray() {
 	}
 	fooArray1 := fooProvider.NewArray()
 
+	setId := fooProvider.Mutator("id")
+	setIncome := fooProvider.Mutator("income")
+	setFirstName := fooProvider.Mutator("firsName")
+
 	for i := 0; i < 10; i++ {
 		foo1 := fooProvider.NewObject()
-		foo1.SetValue("id", 1)
-		foo1.SetValue("income", 64000.0*float64(1+(10/(i+1))))
-		foo1.SetValue("firsName", "Adam")
+		setId.Int(foo1, 1)
+		setIncome.Float64(foo1, 64000.0*float64(1+(10/(i+1))))
+		setFirstName.String(foo1, "Adam")
 		fooArray1.AddObject(foo1)
 	}
 
@@ -78,12 +82,13 @@ func ExampleProvider_NewArray() {
 	})
 
 	totalIncome := 0.0
-	incomeField := fooProvider.Field("income")
+	incomeField := fooProvider.Proto.Accessor("income")
 	//Iterating collection
+
 	err = fooArray1.Objects(func(object *gtly.Object) (bool, error) {
 		fmt.Printf("id: %v\n", object.Value("id"))
 		fmt.Printf("name: %v\n", object.Value("name"))
-		value, _ := object.FloatAt(incomeField.Index)
+		value := incomeField.Float64(object)
 		totalIncome += value
 		return true, nil
 	})
@@ -112,7 +117,7 @@ func ExampleProvider_NewMap() {
 		log.Fatal(err)
 	}
 
-	//Creates a map keyed by id field
+	//Creates a map keyed by id Field
 	aMap := fooProvider.NewMap(gtly.NewKeyProvider("id"))
 	for i := 0; i < 10; i++ {
 		foo := fooProvider.NewObject()
@@ -161,7 +166,7 @@ func ExampleProvider_NewMultimap() {
 		log.Fatal(err)
 	}
 
-	//Creates a multi map keyed by id field
+	//Creates a multi map keyed by id Field
 	aMap := fooProvider.NewMultimap(gtly.NewKeyProvider("city"))
 	for i := 0; i < 10; i++ {
 		foo := fooProvider.NewObject()

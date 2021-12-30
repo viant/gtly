@@ -58,13 +58,11 @@ func (p *Provider) NewMultimap(keyProvider KeyProvider) *Multimap {
 
 //NewProvider creates provider
 func NewProvider(name string, fields ...*Field) (*Provider, error) {
-	for _, field := range fields {
-		field.init()
+	p := &Provider{}
+	for i, field := range fields {
+		field.init(i, p)
 	}
-	p := &Provider{Proto: newProto(name, fields...)}
-	for _, field := range fields {
-		field.provider = p
-	}
+	p.Proto = newProto(name, fields)
 	return p, nil
 }
 

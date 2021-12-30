@@ -1,7 +1,6 @@
 package gtly
 
 import (
-	"github.com/viant/xunsafe"
 	"reflect"
 )
 
@@ -21,7 +20,6 @@ type Field struct {
 	ComponentType string       `json:",omitempty"`
 	Type          reflect.Type `json:"-"`
 	provider      *Provider
-	xField        *xunsafe.Field
 	outputName    string
 	hidden        bool
 	kind          reflect.Kind
@@ -43,7 +41,9 @@ func (f *Field) TimeLayout() string {
 	return f.DataLayout
 }
 
-func (f *Field) init() {
+func (f *Field) init(index int, provider *Provider) {
+	f.Index = index
+	f.provider = provider
 	if f.Type == nil && f.DataType != "" {
 		f.Type = getBaseType(f.DataType)
 	}
@@ -52,7 +52,7 @@ func (f *Field) init() {
 	}
 }
 
-//OutputName returns field output Name
+//OutputName returns Field output Name
 func (f *Field) OutputName() string {
 	if f.outputName == "" {
 		return f.Name
@@ -60,7 +60,7 @@ func (f *Field) OutputName() string {
 	return f.outputName
 }
 
-//Get returns field value
+//Get returns Field value
 func (f *Field) Get(values []interface{}) interface{} {
 	if f.Index < len(values) {
 		return Value(values[f.Index])

@@ -6,31 +6,31 @@ import (
 	"reflect"
 )
 
-//Option represents field option
+//Option represents Field option
 type Option func(field *Field)
 
-//DateLayoutOpt field with data layout option
+//DateLayoutOpt Field with data layout option
 func DateLayoutOpt(layout string) Option {
 	return func(field *Field) {
 		field.DataLayout = layout
 	}
 }
 
-//ProviderOpt return a field provider option
+//ProviderOpt return a Field provider option
 func ProviderOpt(provider *Provider) Option {
 	return func(field *Field) {
 		field.provider = provider
 	}
 }
 
-//OmitEmptyOpt returns a field omit empty option
+//OmitEmptyOpt returns a Field omit empty option
 func OmitEmptyOpt(omitEmpty bool) Option {
 	return func(field *Field) {
 		field.OmitEmpty = &omitEmpty
 	}
 }
 
-//ComponentTypeOpt return a field component type option
+//ComponentTypeOpt return a Field component type option
 func ComponentTypeOpt(componentType string) Option {
 	return func(field *Field) {
 		field.ComponentType = componentType

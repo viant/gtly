@@ -59,7 +59,10 @@ var anObject *Object
 var keyProvider func(o *Object) interface{}
 
 func init() {
-	provider, _ := NewProvider("", NewField("Id", FieldTypeInt), NewField("Name", FieldTypeString))
+	provider, err := NewProvider("", NewField("Id", FieldTypeInt), NewField("Name", FieldTypeString))
+	if err != nil {
+		panic(err)
+	}
 	anObject = provider.NewObject()
 	anObject.Set([]interface{}{123, "John"})
 	keyProvider = NewKeyProvider("Id")

@@ -15,10 +15,12 @@ var defaultEmptyValues = map[interface{}]bool{
 
 //Proto represents generic type prototype
 type Proto struct {
-	Name             string
-	fieldNames       map[string]*Field
-	fields           []*Field
-	nilTypes         []int
+	Name       string
+	fieldNames map[string]int
+	fields     []Field
+	accessors  []Accessor
+	mutators   []Mutator
+
 	OmitEmpty        bool
 	emptyValues      map[interface{}]bool
 	timeLayout       string
@@ -48,11 +50,31 @@ func (p *Proto) buildType() reflect.Type {
 		p.fields[i].kind = structFields[i].Type.Kind()
 	}
 	dataType := reflect.StructOf(structFields)
-	for i, field := range p.fields {
-		p.fields[i].xField = xunsafe.FieldByName(dataType, field.Name)
+	for i := range p.fields {
+		p.initField(&p.fields[i], dataType)
+	}
+	return dataType
+}
+
+func (p *Proto) initField(field *Field, dataType reflect.Type) {
+	xField := xunsafe.FieldByName(dataType, field.Name)
+	if p.caseFormat != p.outputCaseFormat {
+		field.outputName = p.caseFormat.Format(field.Name, p.outputCaseFormat)
 	}
 
-	return dataType
+	p.accessors[field.Index].init(field.Index, xField)
+	p.mutators[field.Index].init(field.Index, xField)
+	p.indexByNames(field)
+}
+
+func (p *Proto) indexByNames(field *Field) {
+	p.fieldNames[field.Name] = field.Index
+	if field.InputName != "" && field.InputName != field.Name {
+		p.fieldNames[field.InputName] = field.Index
+	}
+	if field.outputName != "" && field.outputName != field.Name {
+		p.fieldNames[field.outputName] = field.Index
+	}
 }
 
 //SimpleName returns simple name
@@ -98,7 +120,7 @@ func (p *Proto) InputCaseFormat(source, input format.Case) error {
 	return nil
 }
 
-//Hide set hidden flag for the field
+//Hide set hidden flag for the Field
 func (p *Proto) Hide(name string) {
 	field := p.Field(name)
 	if field == nil {
@@ -107,7 +129,7 @@ func (p *Proto) Hide(name string) {
 	field.hidden = true
 }
 
-//Show remove hidden flag for supplied field
+//Show remove hidden flag for supplied Field
 func (p *Proto) Show(name string) {
 	field := p.Field(name)
 	if field == nil {
@@ -151,50 +173,58 @@ func reallocateIfNeeded(size int, data []interface{}) []interface{} {
 }
 
 //Fields returns fields list
-func (p *Proto) Fields() []*Field {
+func (p *Proto) Fields() []Field {
 	return p.fields
 }
 
-//Field returns field for specified Name
+//Field returns Field for specified Name
 func (p *Proto) Field(name string) *Field {
-	field := p.fieldNames[name]
-	return field
+	index := p.fieldNames[name]
+	return &p.fields[index]
 }
 
-//FieldAt returns field at position
+//FieldAt returns Field at position
 func (p *Proto) FieldAt(index int) *Field {
-	return p.fields[index]
+	return &p.fields[index]
 }
 
-//AddField add fields
-func (p *Proto) initField(field *Field) {
-	if p.caseFormat != p.outputCaseFormat {
-		field.outputName = p.caseFormat.Format(field.Name, p.outputCaseFormat)
-	}
-	p.fieldNames[field.Name] = field
-	if field.InputName != "" {
-		p.fieldNames[field.InputName] = field
-	}
-	if field.outputName != "" {
-		p.fieldNames[field.outputName] = field
-	}
-	field.Index = len(p.fields) - 1
+//Mutator returns field mutator
+func (p *Proto) Mutator(fieldName string) *Mutator {
+	field := p.Field(fieldName)
+	return &p.mutators[field.Index]
+}
+
+//MutatorAt returns field mutator
+func (p *Proto) MutatorAt(index int) *Mutator {
+	return &p.mutators[index]
+}
+
+//Accessor returns a field accessor
+func (p *Proto) Accessor(fieldName string) *Accessor {
+	field := p.Field(fieldName)
+	return &p.accessors[field.Index]
+}
+
+//AccessorAt returns a field accessor
+func (p *Proto) AccessorAt(index int) *Accessor {
+	return &p.accessors[index]
 }
 
 //newProto create a data type prototype
-func newProto(name string, fields ...*Field) *Proto {
+func newProto(name string, fields []*Field) *Proto {
 	result := &Proto{
 		Name:       name,
-		fieldNames: make(map[string]*Field),
-		fields:     make([]*Field, len(fields)),
+		fieldNames: make(map[string]int),
+		fields:     make([]Field, len(fields)),
+		accessors:  make([]Accessor, len(fields)),
+		mutators:   make([]Mutator, len(fields)),
 	}
 	result.timeLayout = time.RFC3339
 	for i := range fields {
-		result.initField(fields[i])
-		fields[i].Index = i
-		result.fields[i] = fields[i]
+		result.fields[i] = *fields[i]
 	}
 	result.dataType = result.buildType()
 	result.xType = xunsafe.NewType(result.dataType)
+
 	return result
 }
