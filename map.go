@@ -47,10 +47,14 @@ func (m *Map) AddObject(obj *Object) {
 }
 
 //Add adds object from a map
-func (m *Map) Add(values map[string]interface{}) {
-	anObject := m._provider.NewObject()
-	anObject.Init(values)
-	m._map[m.keyProvider(anObject)] = anObject
+func (m *Map) Add(values map[string]interface{}) error {
+	item := m._provider.NewObject()
+	err := item.Set(values)
+	if err != nil {
+		return err
+	}
+	m._map[m.keyProvider(item)] = item
+	return nil
 }
 
 //First return the first map elements

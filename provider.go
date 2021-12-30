@@ -2,8 +2,6 @@ package gtly
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
-	"github.com/viant/toolbox"
 	"github.com/viant/xunsafe"
 	"reflect"
 )
@@ -15,14 +13,15 @@ type Provider struct {
 
 //NewObject creates an object
 func (p *Provider) NewObject() *Object {
-	pType := p.Type()
+	pType := p.dataType
 	instance := reflect.New(pType)
-	return &Object{
+	obj := &Object{
 		value: instance,
 		proto: p.Proto,
 		addr:  xunsafe.ValuePointer(&instance),
 		setAt: make([]bool, len(p.Fields())),
 	}
+	return obj
 }
 
 //NewArray creates a slice
@@ -36,20 +35,7 @@ func (p *Provider) NewArray(items ...*Object) *Array {
 //Object creates an object from struct or map
 func (p *Provider) Object(value interface{}) (*Object, error) {
 	result := p.NewObject()
-	if toolbox.IsStruct(value) {
-		return result, toolbox.ProcessStruct(value, func(fieldType reflect.StructField, field reflect.Value) error {
-			result.SetValue(fieldType.Name, field.Interface())
-			return nil
-		})
-	}
-	if toolbox.IsMap(value) {
-		toolbox.ProcessMap(value, func(key, value interface{}) bool {
-			result.SetValue(toolbox.AsString(key), value)
-			return true
-		})
-		return result, nil
-	}
-	return nil, errors.Errorf("unsupported object source: %T", value)
+	return result, result.Set(value)
 }
 
 //NewMap creates a map of string and object
@@ -71,17 +57,24 @@ func (p *Provider) NewMultimap(keyProvider KeyProvider) *Multimap {
 }
 
 //NewProvider creates provider
-func NewProvider(name string, fields ...*Field) *Provider {
-	return &Provider{Proto: newProto(name, fields...)}
+func NewProvider(name string, fields ...*Field) (*Provider, error) {
+	for _, field := range fields {
+		field.init()
+	}
+	p := &Provider{Proto: newProto(name, fields...)}
+	for _, field := range fields {
+		field.provider = p
+	}
+	return p, nil
 }
 
+//UnMarshall unmarshal objects
 func (p *Provider) UnMarshall(data []byte) (*Object, error) {
-	resultMap := new(map[string]interface{})
-	err := json.Unmarshal(data, resultMap)
+	var resultMap = make(map[string]interface{})
+	err := json.Unmarshal(data, &resultMap)
 	if err != nil {
 		return nil, err
 	}
 	anObject := p.NewObject()
-	anObject.Init(*resultMap)
-	return anObject, err
+	return anObject, anObject.Set(resultMap)
 }

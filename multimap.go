@@ -63,15 +63,18 @@ func (m *Multimap) First() *Object {
 }
 
 //Add add item to a map
-func (m *Multimap) Add(values map[string]interface{}) {
+func (m *Multimap) Add(values map[string]interface{}) error {
 	object := m._provider.NewObject()
-	object.Init(values)
+	err := object.Set(values)
+	if err != nil {
+		return err
+	}
 	key := m.keyProvider(object)
 	if _, ok := m._map[key]; !ok {
 		m._map[key] = make([]*Object, 0)
 	}
 	m._map[key] = append(m._map[key], object)
-	return
+	return nil
 }
 
 //AddObject add object into multimap

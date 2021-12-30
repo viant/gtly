@@ -13,11 +13,11 @@ import (
 type setMethod string
 
 const (
-	NoSet              setMethod = "no set"
-	ByInterfaceMutator setMethod = "by interface mutator"
-	ByTypeMutator      setMethod = "by type mutator"
-	ByInitialize       setMethod = "by initialize"
-	ByValue            setMethod = "by interface"
+	noSet              setMethod = "no set"
+	byInterfaceMutator setMethod = "by interface mutator"
+	byTypeMutator      setMethod = "by type mutator"
+	byInitialize       setMethod = "by initialize"
+	byValue            setMethod = "by interface"
 )
 
 type ObjTestCase struct {
@@ -45,38 +45,38 @@ func TestObject(t *testing.T) {
 				"Prop1": {
 					value:       "abc",
 					index:       0,
-					set:         ByValue,
+					set:         byValue,
 					expectedSet: true,
 				},
 				"Prop2": {
 					value:       3.5,
 					index:       1,
-					set:         ByValue,
+					set:         byValue,
 					expectedSet: true,
 					hidden:      true,
 				},
 				"Prop3": {
 					value:       4,
 					index:       2,
-					set:         ByValue,
+					set:         byValue,
 					expectedSet: true,
 				},
 				"Prop4": {
 					value:       true,
 					index:       3,
-					set:         ByValue,
+					set:         byValue,
 					expectedSet: true,
 				},
 				"Prop5": {
 					value:       getIsoDate("2021-11-01"),
 					index:       4,
-					set:         ByValue,
+					set:         byValue,
 					expectedSet: true,
 				},
 				"Prop6": {
 					value:       "",
 					index:       5,
-					set:         NoSet,
+					set:         noSet,
 					expectedSet: false,
 				},
 			},
@@ -95,31 +95,31 @@ func TestObject(t *testing.T) {
 				"Prop1": {
 					value:       "abc",
 					index:       0,
-					set:         ByInitialize,
+					set:         byInitialize,
 					expectedSet: true,
 				},
 				"Prop2": {
 					value:       3.5,
 					index:       1,
-					set:         ByInitialize,
+					set:         byInitialize,
 					expectedSet: true,
 				},
 				"Prop3": {
 					value:       4,
 					index:       2,
-					set:         ByInitialize,
+					set:         byInitialize,
 					expectedSet: true,
 				},
 				"Prop4": {
 					value:       "",
 					index:       3,
-					set:         ByInitialize,
+					set:         byInitialize,
 					expectedSet: true,
 				},
 				"Prop5": {
 					value:       getIsoDate("2021-11-01"),
 					index:       4,
-					set:         ByInitialize,
+					set:         byInitialize,
 					expectedSet: true,
 				},
 			},
@@ -139,31 +139,31 @@ func TestObject(t *testing.T) {
 				"Prop1": {
 					value:       "abc",
 					index:       0,
-					set:         ByInterfaceMutator,
+					set:         byInterfaceMutator,
 					expectedSet: true,
 				},
 				"Prop2": {
 					value:       3.5,
 					index:       1,
-					set:         ByInterfaceMutator,
+					set:         byInterfaceMutator,
 					expectedSet: true,
 				},
 				"Prop3": {
 					value:       4,
 					index:       2,
-					set:         ByInterfaceMutator,
+					set:         byInterfaceMutator,
 					expectedSet: true,
 				},
 				"Prop4": {
 					value:       "",
 					index:       3,
-					set:         ByInterfaceMutator,
+					set:         byInterfaceMutator,
 					expectedSet: true,
 				},
 				"Prop5": {
 					value:       getIsoDate("2021-11-01"),
 					index:       4,
-					set:         ByInterfaceMutator,
+					set:         byInterfaceMutator,
 					expectedSet: true,
 				},
 			},
@@ -183,31 +183,31 @@ func TestObject(t *testing.T) {
 				"Prop1": {
 					value:       "abc",
 					index:       0,
-					set:         ByTypeMutator,
+					set:         byTypeMutator,
 					expectedSet: true,
 				},
 				"Prop2": {
 					value:       3.5,
 					index:       1,
-					set:         ByTypeMutator,
+					set:         byTypeMutator,
 					expectedSet: true,
 				},
 				"Prop3": {
 					value:       4,
 					index:       2,
-					set:         ByTypeMutator,
+					set:         byTypeMutator,
 					expectedSet: true,
 				},
 				"Prop4": {
 					value:       "",
 					index:       3,
-					set:         ByTypeMutator,
+					set:         byTypeMutator,
 					expectedSet: true,
 				},
 				"Prop5": {
 					value:       getIsoDate("2021-11-01"),
 					index:       4,
-					set:         ByTypeMutator,
+					set:         byTypeMutator,
 					expectedSet: true,
 				},
 			},
@@ -227,61 +227,61 @@ func TestObject(t *testing.T) {
 				"Prop1": {
 					value:       "abc",
 					index:       0,
-					set:         ByInitialize,
+					set:         byInitialize,
 					expectedSet: true,
 				},
 				"Prop2": {
 					value:       3.5,
 					index:       1,
-					set:         ByInitialize,
+					set:         byInitialize,
 					expectedSet: true,
 				},
 				"Prop3": {
 					value:       4,
 					index:       2,
-					set:         ByInitialize,
+					set:         byInitialize,
 					expectedSet: true,
 				},
 				"Prop4": {
 					value:       "",
 					index:       3,
-					set:         ByInitialize,
+					set:         byInitialize,
 					expectedSet: true,
 				},
 				"Prop5": {
 					value:       getIsoDate("2021-11-01"),
 					index:       4,
-					set:         ByInitialize,
+					set:         byInitialize,
 					expectedSet: true,
 				},
 				"Prop6": {
 					value:       "abc",
 					index:       5,
-					set:         ByTypeMutator,
+					set:         byTypeMutator,
 					expectedSet: true,
 				},
 				"Prop7": {
 					value:       3.5,
 					index:       6,
-					set:         ByValue,
+					set:         byValue,
 					expectedSet: true,
 				},
 				"Prop8": {
 					value:       4,
 					index:       7,
-					set:         ByInterfaceMutator,
+					set:         byInterfaceMutator,
 					expectedSet: true,
 				},
 				"Prop9": {
 					value:       "",
 					index:       8,
-					set:         ByTypeMutator,
+					set:         byTypeMutator,
 					expectedSet: true,
 				},
 				"Prop10": {
 					value:       getIsoDate("2021-11-01"),
 					index:       9,
-					set:         ByValue,
+					set:         byValue,
 					expectedSet: true,
 				},
 			},
@@ -306,19 +306,19 @@ func TestObject(t *testing.T) {
 				"Prop1": {
 					value:       "abc",
 					index:       0,
-					set:         NoSet,
+					set:         noSet,
 					expectedSet: false,
 				},
 				"Prop2": {
 					value:       3.5,
 					index:       1,
-					set:         NoSet,
+					set:         noSet,
 					expectedSet: false,
 				},
 				"Prop3": {
 					value:       4,
 					index:       2,
-					set:         NoSet,
+					set:         noSet,
 					expectedSet: false,
 				},
 			},
@@ -328,8 +328,15 @@ func TestObject(t *testing.T) {
 	}
 
 	for i, testCase := range testCases {
-		provider := gtly.NewProvider(fmt.Sprintf("testCase%v", i))
-		initObjectProviderFields(testCase, provider)
+		fields, err := objectFields(testCase.fields)
+		if !assert.Nil(t, err, testCase.description) {
+			continue
+		}
+		provider, err := gtly.NewProvider(fmt.Sprintf("testCase%v", i), fields...)
+		if !assert.Nil(t, err, testCase.description) {
+			continue
+		}
+		initTestCase(testCase, provider)
 		anObject := provider.NewObject()
 		setObjectValues(testCase.fields, anObject)
 		runObjectTestFor(t, testCase, anObject)
@@ -343,15 +350,12 @@ func runObjectTestFor(t *testing.T, testCase ObjTestCase, anObject *gtly.Object)
 	assert.Equal(t, testCase.asMap, anObject.AsMap(), testCase.description)
 }
 
-func initObjectProviderFields(testCase ObjTestCase, provider *gtly.Provider) {
-	fields := make([]*gtly.Field, len(testCase.fields))
-	// To keep given order after adding Field
-	for k, field := range testCase.fields {
-		fields[field.index] = &gtly.Field{Name: k, Type: reflect.TypeOf(field.value), Index: field.index}
-	}
-
+func initTestCase(testCase ObjTestCase, provider *gtly.Provider) {
+	fields := provider.Fields()
 	for _, field := range fields {
-		provider.AddField(field)
+		testField := testCase.fields[field.Name]
+		testField.index = field.Index
+		testCase.fields[field.Name] = testField
 		if testCase.fields[field.Name].hidden {
 			provider.Hide(field.Name)
 		}
@@ -361,8 +365,10 @@ func initObjectProviderFields(testCase ObjTestCase, provider *gtly.Provider) {
 
 func checkObjectValues(t *testing.T, values map[string]ObjectTestField, object *gtly.Object, description string) {
 	for k, v := range values {
-		assert.Equal(t, v.expectedSet, object.SetAt(v.index), description)
-		if v.set == NoSet {
+		if !assert.Equal(t, v.expectedSet, object.SetAt(v.index), description+" "+k) {
+			//	fmt.Printf("%d %v %+v\n", v.index, k, object)
+		}
+		if v.set == noSet {
 			continue
 		}
 		checkObjectByType(t, v.value, k, object, v.index, description)
@@ -389,7 +395,7 @@ func checkObjectByType(t *testing.T, value interface{}, name string, object *gtl
 		valueAt, isPresent := object.BoolAt(index)
 		assertObjectValueFound(t, fieldValue, valueAt, isPresent, description)
 	case float64:
-		assert.Equal(t, value, object.FloatAccessor(name)(), description)
+		assert.Equal(t, value, object.Float64Accessor(name)(), description)
 		valueAt, isPresent := object.FloatAt(index)
 		assertObjectValueFound(t, fieldValue, valueAt, isPresent, description)
 	case time.Time:
@@ -407,33 +413,47 @@ func assertObjectValueFound(t *testing.T, expected interface{}, actual interface
 }
 
 func setObjectValues(values map[string]ObjectTestField, object *gtly.Object) {
-	initializeObjectValues(values, object)
+	_ = initializeObjectValues(values, object)
 	for k, v := range values {
 		switch v.set {
-		case NoSet, ByInitialize:
+		case noSet, byInitialize:
 			continue
-		case ByInterfaceMutator:
+		case byInterfaceMutator:
 			object.Mutator(k)(v.value)
-		case ByTypeMutator:
+		case byTypeMutator:
 			setObjectByTypeMutator(v, object, k)
-		case ByValue:
+		case byValue:
 			object.SetValue(k, v.value)
 		default:
 			panic(fmt.Errorf("not implemented setting method: %v", v.set))
 		}
 	}
+
 }
 
-func initializeObjectValues(values map[string]ObjectTestField, object *gtly.Object) {
+func objectFields(values map[string]ObjectTestField) ([]*gtly.Field, error) {
+	var result = make([]*gtly.Field, 0)
+	for k, v := range values {
+		opt, err := gtly.ValueOpt(v.value)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, gtly.NewField(k, "", opt))
+	}
+	return result, nil
+}
+
+func initializeObjectValues(values map[string]ObjectTestField, object *gtly.Object) error {
 	fieldValues := map[string]interface{}{}
 	for k, value := range values {
-		if value.set == ByInitialize {
+		if value.set == byInitialize {
 			fieldValues[k] = value.value
 		}
 	}
 	if len(fieldValues) > 0 {
-		object.Init(fieldValues)
+		return object.Set(fieldValues)
 	}
+	return nil
 }
 
 func setObjectByTypeMutator(v ObjectTestField, object *gtly.Object, k string) {
@@ -441,7 +461,7 @@ func setObjectByTypeMutator(v ObjectTestField, object *gtly.Object, k string) {
 	case int:
 		object.IntMutator(k)(fieldValue)
 	case float64:
-		object.FloatMutator(k)(fieldValue)
+		object.Float64Mutator(k)(fieldValue)
 	case string:
 		object.Mutator(k)(fieldValue)
 	case bool:
@@ -458,6 +478,7 @@ func checkObjectValuesOutOfRange(t *testing.T, testCase ObjTestCase, anObject *g
 	assert.False(t, anObject.SetAt(fieldsLen), description)
 	fieldValue, isValuePresent := anObject.ValueAt(fieldsLen)
 	assertObjectValueNotFound(t, fieldValue, nil, isValuePresent, description)
+
 	intTypeFieldValue, isValuePresent := anObject.IntAt(fieldsLen)
 	assertObjectValueNotFound(t, intTypeFieldValue, 0, isValuePresent, description)
 	stringTypeFieldValue, isValuePresent := anObject.StringAt(fieldsLen)
@@ -486,17 +507,18 @@ var objObjectValues map[string]interface{}
 var objPreparedObj *gtly.Object
 
 func init() {
-	objBenchProvider = gtly.NewProvider("Bench")
-	objBenchProvider.AddField(&gtly.Field{Name: "Prop1", Type: reflect.TypeOf(0), Index: 0})
-	objBenchProvider.AddField(&gtly.Field{Name: "Prop2", Type: reflect.TypeOf(""), Index: 1})
-	objBenchProvider.AddField(&gtly.Field{Name: "Prop3", Type: reflect.TypeOf(0.0), Index: 2})
+	objBenchProvider, _ = gtly.NewProvider("Bench",
+		&gtly.Field{Name: "Prop1", Type: reflect.TypeOf(0), Index: 0},
+		&gtly.Field{Name: "Prop2", Type: reflect.TypeOf(""), Index: 1},
+		&gtly.Field{Name: "Prop3", Type: reflect.TypeOf(0.0), Index: 2},
+	)
 	objObjectValues = map[string]interface{}{
 		"Prop1": 123,
 		"Prop2": "abc",
 		"Prop3": 1.0,
 	}
 	objPreparedObj = objBenchProvider.NewObject()
-	objPreparedObj.Init(objObjectValues)
+	objPreparedObj.Set(objObjectValues)
 }
 
 func BenchmarkObject_IntAccessor(b *testing.B) {
@@ -516,7 +538,7 @@ func BenchmarkObject_Initialize(b *testing.B) {
 	b.ReportAllocs()
 	o := objBenchProvider.NewObject()
 	for i := 0; i < b.N; i++ {
-		o.Init(objObjectValues)
+		o.Set(objObjectValues)
 	}
 }
 

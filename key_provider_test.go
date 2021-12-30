@@ -3,22 +3,27 @@ package gtly
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"reflect"
 	"testing"
 )
 
 func TestKeyProducer_Produce(t *testing.T) {
 	testCases := []struct {
 		description string
-		fields      map[string]interface{}
+		fields      []*Field
 		values      []map[string]interface{}
 		results     []string
 	}{
 		{
 			description: "",
-			fields: map[string]interface{}{
-				"Id":   "",
-				"Name": "",
+			fields: []*Field{
+				{
+					Name:     "Id",
+					DataType: FieldTypeString,
+				},
+				{
+					Name:     "Name",
+					DataType: FieldTypeString,
+				},
 			},
 			values: []map[string]interface{}{
 				{
@@ -35,28 +40,17 @@ func TestKeyProducer_Produce(t *testing.T) {
 	}
 
 	for i, testCase := range testCases {
-		provider := NewProvider(fmt.Sprintf("test#%v", i))
-		initKeyProducerProvider(testCase, provider)
+		provider, err := NewProvider(fmt.Sprintf("test#%v", i), testCase.fields...)
+		if !assert.Nil(t, err, testCase.description) {
+			continue
+		}
 		for index, value := range testCase.values {
 			anObject := provider.NewObject()
-			anObject.Init(value)
+			err = anObject.Set(value)
+			assert.Nil(t, err, testCase.description)
 			keyProducer := NewKeyProvider("Id")
 			assert.Equal(t, testCase.results[index], keyProducer(anObject), testCase.description)
 		}
-	}
-}
-
-func initKeyProducerProvider(testCase struct {
-	description string
-	fields      map[string]interface{}
-	values      []map[string]interface{}
-	results     []string
-}, provider *Provider) {
-	for key, value := range testCase.fields {
-		provider.AddField(&Field{
-			Type: reflect.TypeOf(value),
-			Name: key,
-		})
 	}
 }
 
@@ -65,20 +59,9 @@ var anObject *Object
 var keyProvider func(o *Object) interface{}
 
 func init() {
-	provider := NewProvider("")
-	provider.AddField(&Field{
-		Type: reflect.TypeOf(interface{}("")),
-		Name: "Id",
-	})
-	provider.AddField(&Field{
-		Type: reflect.TypeOf(interface{}("")),
-		Name: "Name",
-	})
-	anObject := provider.NewObject()
-	anObject.Init(map[string]interface{}{
-		"Id":   "123",
-		"Name": "John",
-	})
+	provider, _ := NewProvider("", NewField("Id", FieldTypeInt), NewField("Name", FieldTypeString))
+	anObject = provider.NewObject()
+	anObject.Set([]interface{}{123, "John"})
 	keyProvider = NewKeyProvider("Id")
 }
 

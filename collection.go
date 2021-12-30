@@ -3,7 +3,7 @@ package gtly
 //Collection represents generic collection
 type Collection interface {
 	//Add adds item to collection
-	Add(values map[string]interface{})
+	Add(values map[string]interface{}) error
 	//AddObject add an object
 	AddObject(object *Object)
 	//Range calls handler with collection item

@@ -7,7 +7,6 @@ import (
 	"github.com/viant/gtly/codec/json"
 	"github.com/viant/toolbox/format"
 	"log"
-	"reflect"
 	"testing"
 	"time"
 )
@@ -15,13 +14,16 @@ import (
 //ExampleProvider_NewObject new object example
 func ExampleProvider_NewObject() {
 
-	fooProvider := gtly.NewProvider("foo",
+	fooProvider, err := gtly.NewProvider("foo",
 		gtly.NewField("id", gtly.FieldTypeInt),
 		gtly.NewField("firsName", gtly.FieldTypeString),
 		gtly.NewField("description", gtly.FieldTypeString, gtly.OmitEmptyOpt(true)),
 		gtly.NewField("updated", gtly.FieldTypeTime, gtly.DateLayoutOpt("2006-01-02T15:04:05Z07:00")),
 		gtly.NewField("numbers", gtly.FieldTypeArray, gtly.ComponentTypeOpt(gtly.FieldTypeInt)),
 	)
+	if err != nil {
+		log.Fatal(err)
+	}
 	foo1 := fooProvider.NewObject()
 	foo1.SetValue("id", 1)
 	foo1.SetValue("firsName", "Adam")
@@ -47,14 +49,17 @@ func ExampleProvider_NewObject() {
 
 //TestProvider_NewArray new array example
 func ExampleProvider_NewArray() {
-	fooProvider := gtly.NewProvider("foo",
+	fooProvider, err := gtly.NewProvider("foo",
 		gtly.NewField("id", gtly.FieldTypeInt),
 		gtly.NewField("firsName", gtly.FieldTypeString),
-		gtly.NewField("income", gtly.FieldTypeFloat),
+		gtly.NewField("income", gtly.FieldTypeFloat64),
 		gtly.NewField("description", gtly.FieldTypeString, gtly.OmitEmptyOpt(true)),
 		gtly.NewField("updated", gtly.FieldTypeTime, gtly.DateLayoutOpt(time.RFC3339)),
 		gtly.NewField("numbers", gtly.FieldTypeArray, gtly.ComponentTypeOpt(gtly.FieldTypeInt)),
 	)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fooArray1 := fooProvider.NewArray()
 
 	for i := 0; i < 10; i++ {
@@ -75,7 +80,7 @@ func ExampleProvider_NewArray() {
 	totalIncome := 0.0
 	incomeField := fooProvider.Field("income")
 	//Iterating collection
-	err := fooArray1.Objects(func(object *gtly.Object) (bool, error) {
+	err = fooArray1.Objects(func(object *gtly.Object) (bool, error) {
 		fmt.Printf("id: %v\n", object.Value("id"))
 		fmt.Printf("name: %v\n", object.Value("name"))
 		value, _ := object.FloatAt(incomeField.Index)
@@ -96,13 +101,16 @@ func ExampleProvider_NewArray() {
 //ExampleProvider_NewMap new map example
 func ExampleProvider_NewMap() {
 
-	fooProvider := gtly.NewProvider("foo",
+	fooProvider, err := gtly.NewProvider("foo",
 		gtly.NewField("id", gtly.FieldTypeInt),
 		gtly.NewField("firsName", gtly.FieldTypeString),
 		gtly.NewField("description", gtly.FieldTypeString, gtly.OmitEmptyOpt(true)),
 		gtly.NewField("updated", gtly.FieldTypeTime, gtly.DateLayoutOpt(time.RFC3339)),
 		gtly.NewField("numbers", gtly.FieldTypeArray, gtly.ComponentTypeOpt(gtly.FieldTypeInt)),
 	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	//Creates a map keyed by id field
 	aMap := fooProvider.NewMap(gtly.NewKeyProvider("id"))
@@ -142,13 +150,16 @@ func ExampleProvider_NewMap() {
 
 //ExampleProvider_NewMulti new multi example
 func ExampleProvider_NewMultimap() {
-	fooProvider := gtly.NewProvider("foo",
+	fooProvider, err := gtly.NewProvider("foo",
 		gtly.NewField("id", gtly.FieldTypeInt),
 		gtly.NewField("firsName", gtly.FieldTypeString),
 		gtly.NewField("city", gtly.FieldTypeString, gtly.OmitEmptyOpt(true)),
 		gtly.NewField("updated", gtly.FieldTypeTime, gtly.DateLayoutOpt(time.RFC3339)),
 		gtly.NewField("numbers", gtly.FieldTypeArray, gtly.ComponentTypeOpt(gtly.FieldTypeInt)),
 	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	//Creates a multi map keyed by id field
 	aMap := fooProvider.NewMultimap(gtly.NewKeyProvider("city"))
@@ -195,15 +206,15 @@ func TestProvider_UnMarshall(t *testing.T) {
 	testCases := []struct {
 		description    string
 		json           []byte
-		fields         map[string]interface{}
+		fields         []*gtly.Field
 		expectedValues map[string]interface{}
 	}{
 		{
 			description: "unmarshalling",
-			fields: map[string]interface{}{
-				"Id":    0,
-				"Name":  "",
-				"Price": 0.5,
+			fields: []*gtly.Field{
+				gtly.NewField("Id", gtly.FieldTypeInt),
+				gtly.NewField("Name", gtly.FieldTypeString),
+				gtly.NewField("Price", gtly.FieldTypeFloat64),
 			},
 			json: []byte(`{
 				"Id": 1,
@@ -217,8 +228,10 @@ func TestProvider_UnMarshall(t *testing.T) {
 	}
 
 	for i, testCase := range testCases {
-		provider := gtly.NewProvider(fmt.Sprintf("testcase#%v", i))
-		addProviderFields(testCase, provider)
+		provider, err := gtly.NewProvider(fmt.Sprintf("testcase#%v", i), testCase.fields...)
+		if err != nil {
+			log.Fatal(err)
+		}
 		anObject, err := provider.UnMarshall(testCase.json)
 		if err != nil {
 			log.Fatal(err)
@@ -232,19 +245,5 @@ func TestProvider_UnMarshall(t *testing.T) {
 				assert.False(t, anObject.SetAt(field.Index), testCase.description)
 			}
 		}
-	}
-}
-
-func addProviderFields(testCase struct {
-	description    string
-	json           []byte
-	fields         map[string]interface{}
-	expectedValues map[string]interface{}
-}, provider *gtly.Provider) {
-	for k, v := range testCase.fields {
-		provider.AddField(&gtly.Field{
-			Name: k,
-			Type: reflect.TypeOf(v),
-		})
 	}
 }

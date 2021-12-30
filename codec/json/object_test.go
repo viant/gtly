@@ -3,6 +3,7 @@ package json
 import (
 	"encoding/json"
 	"github.com/francoispqt/gojay"
+	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"github.com/viant/gtly"
 	"github.com/viant/toolbox/format"
@@ -13,7 +14,7 @@ import (
 func TestObject_MarshalJSONObject(t *testing.T) {
 	testCases := []struct {
 		description      string
-		fields           map[string]interface{}
+		fields           []*gtly.Field
 		values           map[string]interface{}
 		result           map[string]interface{}
 		outputFormat     format.Case
@@ -21,10 +22,10 @@ func TestObject_MarshalJSONObject(t *testing.T) {
 	}{
 		{
 			description: "marshal all fields",
-			fields: map[string]interface{}{
-				"Id":    0,
-				"Name":  "",
-				"Price": 0.5,
+			fields: []*gtly.Field{
+				{Name: "Id", DataType: gtly.FieldTypeInt},
+				{Name: "Name", DataType: gtly.FieldTypeString},
+				{Name: "Price", DataType: gtly.FieldTypeFloat64},
 			},
 			values: map[string]interface{}{
 				"Id":    1,
@@ -41,10 +42,10 @@ func TestObject_MarshalJSONObject(t *testing.T) {
 		},
 		{
 			description: "marshal fields which were set",
-			fields: map[string]interface{}{
-				"Id":    0,
-				"Name":  "",
-				"Price": 0.5,
+			fields: []*gtly.Field{
+				{Name: "Id", DataType: gtly.FieldTypeInt},
+				{Name: "Name", DataType: gtly.FieldTypeString},
+				{Name: "Price", DataType: gtly.FieldTypeFloat64},
 			},
 			values: map[string]interface{}{
 				"Id":   1,
@@ -60,14 +61,12 @@ func TestObject_MarshalJSONObject(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		provider := gtly.NewProvider(testCase.description)
-		for k, v := range testCase.fields {
-			provider.AddField(&gtly.Field{
-				Name: k,
-				Type: reflect.TypeOf(v),
-			})
+		provider, err := gtly.NewProvider(testCase.description, testCase.fields...)
+		if !assert.Nil(t, err, testCase.description) {
+			continue
 		}
-		provider.OutputCaseFormat(testCase.sourceCaseFormat, testCase.outputFormat)
+
+		_ = provider.OutputCaseFormat(testCase.sourceCaseFormat, testCase.outputFormat)
 		anObject := provider.NewObject()
 		for k, v := range testCase.values {
 			anObject.SetValue(k, v)
@@ -75,7 +74,8 @@ func TestObject_MarshalJSONObject(t *testing.T) {
 		object := Object{anObject}
 		val, _ := gojay.MarshalJSONObject(object)
 		newMap := new(map[string]interface{})
-		json.Unmarshal(val, newMap)
+		err = json.Unmarshal(val, newMap)
+		assert.Nil(t, err, testCase.description)
 		assertly.AssertValues(t, testCase.result, *newMap, testCase.description)
 	}
 }
@@ -84,20 +84,18 @@ func TestObject_MarshalJSONObject(t *testing.T) {
 var anObject *Object
 
 func init() {
-	provider := gtly.NewProvider("")
-	provider.AddField(&gtly.Field{
+	provider, _ := gtly.NewProvider("", &gtly.Field{
 		Name: "Id",
 		Type: reflect.TypeOf(1),
-	})
-	provider.AddField(&gtly.Field{
+	}, &gtly.Field{
 		Name: "Name",
 		Type: reflect.TypeOf(""),
-	})
-	provider.AddField(&gtly.Field{
+	}, &gtly.Field{
 		Name: "Price",
 		Type: reflect.TypeOf(1.5),
 	})
-	anObject = &Object{provider.NewObject()}
+	obj := provider.NewObject()
+	anObject = &Object{obj}
 	anObject.SetValue("Id", 10)
 	anObject.SetValue("Name", "some name")
 	anObject.SetValue("Price", 100.5)

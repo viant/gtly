@@ -3,13 +3,12 @@ package gtly_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/gtly"
-	"reflect"
 	"testing"
 )
 
 type MultimapTestCase struct {
 	description string
-	fields      map[string]interface{}
+	fields      []*gtly.Field
 	multiValues []map[string]interface{}
 	uniqueField string
 	size        int
@@ -24,10 +23,19 @@ func TestMultimap(t *testing.T) {
 			uniqueField: "Prop1",
 			size:        2,
 			isNil:       false,
-			fields: map[string]interface{}{
-				"Prop1": "",
-				"Prop2": 0,
-				"Prop3": 1.0,
+			fields: []*gtly.Field{
+				{
+					Name:     "Prop1",
+					DataType: gtly.FieldTypeString,
+				},
+				{
+					Name:     "Prop2",
+					DataType: gtly.FieldTypeInt,
+				},
+				{
+					Name:     "Prop3",
+					DataType: gtly.FieldTypeFloat64,
+				},
 			},
 			multiValues: []map[string]interface{}{
 				{
@@ -49,8 +57,10 @@ func TestMultimap(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		provider := gtly.NewProvider("")
-		initMultimapFields(testCase, provider)
+		provider, err := gtly.NewProvider("", testCase.fields...)
+		if !assert.Nil(t, err, testCase.description) {
+			continue
+		}
 		multiMap := provider.NewMultimap(gtly.NewKeyProvider(testCase.uniqueField))
 		initMultimapValues(testCase, provider, multiMap)
 		assert.Equal(t, testCase.size, multiMap.Size(), testCase.description)
@@ -72,16 +82,7 @@ func checkMultimapRange(t *testing.T, testCase MultimapTestCase, multiMap *gtly.
 func initMultimapValues(testCase MultimapTestCase, provider *gtly.Provider, multiMap *gtly.Multimap) {
 	for _, values := range testCase.multiValues {
 		anObject := provider.NewObject()
-		anObject.Init(values)
+		anObject.Set(values)
 		multiMap.AddObject(anObject)
-	}
-}
-
-func initMultimapFields(testCase MultimapTestCase, provider *gtly.Provider) {
-	for k, v := range testCase.fields {
-		provider.AddField(&gtly.Field{
-			Type: reflect.TypeOf(v),
-			Name: k,
-		})
 	}
 }

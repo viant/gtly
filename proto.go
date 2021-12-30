@@ -1,13 +1,10 @@
 package gtly
 
 import (
-	"fmt"
-	"github.com/pkg/errors"
 	"github.com/viant/toolbox/format"
 	"github.com/viant/xunsafe"
 	"reflect"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -19,7 +16,6 @@ var defaultEmptyValues = map[interface{}]bool{
 //Proto represents generic type prototype
 type Proto struct {
 	Name             string
-	lock             *sync.RWMutex
 	fieldNames       map[string]*Field
 	fields           []*Field
 	nilTypes         []int
@@ -34,19 +30,8 @@ type Proto struct {
 	kind             reflect.Kind
 }
 
+//Type returns proto data type
 func (p *Proto) Type() reflect.Type {
-	return p.ensureType()
-}
-
-func (p *Proto) ensureType() reflect.Type {
-	if p.dataType != nil {
-		return p.dataType
-	}
-	if p.dataType == nil {
-		dataType := p.buildType()
-		p.dataType = dataType
-		p.xType = xunsafe.NewType(p.dataType)
-	}
 	return p.dataType
 }
 
@@ -133,10 +118,7 @@ func (p *Proto) Show(name string) {
 
 //Size returns proto size
 func (p *Proto) Size() int {
-	p.lock.RLock()
-	result := len(p.fields)
-	p.lock.RUnlock()
-	return result
+	return len(p.fields)
 }
 
 func (p *Proto) asMap(values []interface{}) map[string]interface{} {
@@ -179,57 +161,13 @@ func (p *Proto) Field(name string) *Field {
 	return field
 }
 
+//FieldAt returns field at position
 func (p *Proto) FieldAt(index int) *Field {
 	return p.fields[index]
 }
 
-//Object creates an object
-func (p *Proto) Object(values []interface{}) (*Object, error) {
-	if len(p.fields) < len(values) {
-		return nil, errors.Errorf("invalid value count: %v, field count: %v", len(values), len(p.fields))
-	}
-
-	object := &Object{proto: p}
-	if len(p.nilTypes) > 0 {
-		for _, index := range p.nilTypes {
-			if values[index] != nil {
-				p.fields[index].InitType(values[index])
-			}
-		}
-		p.updateNilTypes()
-	}
-	return object, nil
-}
-
-//FieldWithValue returns existing filed , or create a new field
-func (p *Proto) FieldWithValue(fieldName string, value interface{}) *Field {
-	p.lock.RLock()
-	field, ok := p.fieldNames[fieldName]
-	p.lock.RUnlock()
-	if ok {
-		return field
-	}
-
-	field = &Field{Name: fieldName, Index: len(p.fieldNames)}
-	if p.inputCaseFormat != p.caseFormat {
-		field.InputName = field.Name
-		field.Name = p.inputCaseFormat.Format(fieldName, p.caseFormat)
-	}
-	field.InitType(value)
-	if value == nil {
-		p.addNilType(field.Index)
-	}
-
-	return p.AddField(field)
-}
-
 //AddField add fields
-func (p *Proto) AddField(field *Field) *Field {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-	if p.dataType != nil {
-		panic(fmt.Sprintf("proto has been already in use"))
-	}
+func (p *Proto) initField(field *Field) {
 	if p.caseFormat != p.outputCaseFormat {
 		field.outputName = p.caseFormat.Format(field.Name, p.outputCaseFormat)
 	}
@@ -240,39 +178,23 @@ func (p *Proto) AddField(field *Field) *Field {
 	if field.outputName != "" {
 		p.fieldNames[field.outputName] = field
 	}
-	p.fields = append(p.fields, field)
 	field.Index = len(p.fields) - 1
-	return field
-}
-
-func (p *Proto) updateNilTypes() {
-	p.nilTypes = make([]int, 0)
-	for i := range p.fields {
-		if p.fields[i].DataType == "" {
-			p.nilTypes = append(p.nilTypes, p.fields[i].Index)
-		}
-	}
-}
-
-func (p *Proto) addNilType(index int) {
-	if len(p.nilTypes) == 0 {
-		p.nilTypes = make([]int, 0)
-	}
-	p.nilTypes = append(p.nilTypes, index)
 }
 
 //newProto create a data type prototype
 func newProto(name string, fields ...*Field) *Proto {
 	result := &Proto{
 		Name:       name,
-		lock:       &sync.RWMutex{},
 		fieldNames: make(map[string]*Field),
-		fields:     make([]*Field, 0),
+		fields:     make([]*Field, len(fields)),
 	}
 	result.timeLayout = time.RFC3339
 	for i := range fields {
-		result.AddField(fields[i])
+		result.initField(fields[i])
 		fields[i].Index = i
+		result.fields[i] = fields[i]
 	}
+	result.dataType = result.buildType()
+	result.xType = xunsafe.NewType(result.dataType)
 	return result
 }

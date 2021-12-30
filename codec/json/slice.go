@@ -24,13 +24,18 @@ func (s Slice) IsNil() bool {
 //MarshalJSONArray converts primitive collection into JSON array
 func (s Slice) MarshalJSONArray(enc *gojay.Encoder) {
 	toolbox.ProcessSlice(s._data, func(item interface{}) bool {
-		if item != nil {
-			if toolbox.IsStruct(item) && toolbox.IsPointer(item) {
-				provider := gtly.NewProvider("foo")
-				if object, err := provider.Object(item); err == nil {
-					item = &Object{object}
-				}
-			}
+		if item == nil {
+			enc.AddNull()
+			return true
+		}
+		fields, err := gtly.MapFields(item)
+		if err != nil {
+			enc.AddInterface(item) // item has to be primitive
+			return true
+		}
+		provider, err := gtly.NewProvider("foo", fields...)
+		if object, err := provider.Object(item); err == nil {
+			item = &Object{object}
 		}
 		enc.AddInterface(item)
 		return true

@@ -5,13 +5,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/gtly"
 	"github.com/viant/toolbox/format"
-	"reflect"
 	"testing"
 )
 
 type MapTestCase struct {
 	description    string
-	fields         map[string]interface{}
+	fields         []*gtly.Field
 	uniqueField    string
 	mapUniqueField string
 	values         []MapFieldValues
@@ -33,11 +32,23 @@ func TestMap(t *testing.T) {
 			outputFormat:   format.CaseLowerCamel,
 			uniqueField:    "Id",
 			mapUniqueField: "id",
-			fields: map[string]interface{}{
-				"Id":    0,
-				"Prop1": "",
-				"Prop2": 0,
-				"Prop3": 0.0,
+			fields: []*gtly.Field{
+				{
+					Name:     "Id",
+					DataType: gtly.FieldTypeInt,
+				},
+				{
+					Name:     "Prop1",
+					DataType: gtly.FieldTypeString,
+				},
+				{
+					Name:     "Prop2",
+					DataType: gtly.FieldTypeInt,
+				},
+				{
+					Name:     "Prop3",
+					DataType: gtly.FieldTypeFloat64,
+				},
 			},
 			values: []MapFieldValues{
 				{
@@ -62,8 +73,10 @@ func TestMap(t *testing.T) {
 	}
 
 	for i, testCase := range testCases {
-		provider := gtly.NewProvider(fmt.Sprintf("testCase#%v", i))
-		initMapProvider(testCase, provider)
+		provider, err := gtly.NewProvider(fmt.Sprintf("testCase#%v", i), testCase.fields...)
+		if !assert.Nil(t, err, testCase.description) {
+			continue
+		}
 		aMap := provider.NewMap(gtly.NewKeyProvider(testCase.uniqueField))
 		addMapObjects(testCase, provider, aMap)
 		checkMapObjects(t, testCase, aMap, len(testCase.values))
@@ -71,6 +84,7 @@ func TestMap(t *testing.T) {
 		assert.Equal(t, provider.Proto, aMap.Proto(), testCase.description)
 		checkMapFirstElement(t, testCase, aMap)
 		checkMapRange(t, testCase, aMap, len(testCase.values))
+		provider.Proto.OutputCaseFormat(format.CaseUpperCamel, format.CaseLowerCamel)
 		assert.Equal(t, testCase.values[0].asMap, aMap.Object(testCase.values[0].key).AsMap())
 		assert.Nil(t, aMap.Object(""))
 	}
@@ -110,16 +124,6 @@ func checkMapObjects(t *testing.T, testCase MapTestCase, aMap *gtly.Map, n int) 
 	})
 }
 
-func initMapProvider(testCase MapTestCase, provider *gtly.Provider) {
-	for k, v := range testCase.fields {
-		provider.AddField(&gtly.Field{
-			Type: reflect.TypeOf(v),
-			Name: k,
-		})
-	}
-	provider.OutputCaseFormat(format.CaseUpperCamel, testCase.outputFormat)
-}
-
 func checkMapFirstElement(t *testing.T, testCase MapTestCase, aMap *gtly.Map) {
 	if len(testCase.values) == 0 {
 		assert.Nil(t, aMap.First(), testCase.description)
@@ -131,7 +135,7 @@ func checkMapFirstElement(t *testing.T, testCase MapTestCase, aMap *gtly.Map) {
 func addMapObjects(testCase MapTestCase, provider *gtly.Provider, aMap *gtly.Map) {
 	for _, value := range testCase.values {
 		anObject := provider.NewObject()
-		anObject.Init(value.values)
+		anObject.Set(value.values)
 		aMap.PutObject(value.key, anObject)
 	}
 }

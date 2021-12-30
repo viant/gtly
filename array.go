@@ -46,11 +46,14 @@ func (a *Array) Objects(handler func(item *Object) (bool, error)) error {
 }
 
 //Add adds object
-func (a *Array) Add(value map[string]interface{}) {
-	anObject := a._provider.NewObject()
-	anObject.Init(value)
-	a._data = append(a._data, anObject)
-
+func (a *Array) Add(value map[string]interface{}) error {
+	item := a._provider.NewObject()
+	err := item.Set(value)
+	if err != nil {
+		return err
+	}
+	a._data = append(a._data, item)
+	return nil
 }
 
 //First returns the first element on the slice

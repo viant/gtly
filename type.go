@@ -11,8 +11,8 @@ const ( //Data type definition
 	FieldTypeInt = "int"
 	//FieldTypeInt64 int type
 	FieldTypeInt64 = "int64"
-	//FieldTypeFloat float type
-	FieldTypeFloat = "float"
+	//FieldTypeFloat32 float type
+	FieldTypeFloat32 = "float32"
 	//FieldTypeFloat64 float type
 	FieldTypeFloat64 = "float64"
 	//FieldTypeBool bool type
@@ -38,13 +38,57 @@ var (
 	typeString  = reflect.TypeOf("")
 	typeBytes   = reflect.TypeOf([]byte(""))
 	typeTime    = reflect.TypeOf(time.Time{})
+	typeTimePtr = reflect.TypeOf(&time.Time{})
 )
 
-//getBaseTypeName returns base type
-func getBaseTypeName(value interface{}) string {
+//typeNameForValue returns base type
+func typeNameForType(t reflect.Type) string {
+	switch t.Kind() {
+	case reflect.Float32:
+		return FieldTypeFloat32
+	case reflect.Float64:
+		return FieldTypeFloat64
+	case reflect.Int, reflect.Uint64, reflect.Uint:
+		return FieldTypeInt
+	case reflect.Int64:
+		return FieldTypeInt64
+	case reflect.Bool:
+		return FieldTypeBool
+	case reflect.Struct:
+		if t == typeTime {
+			return FieldTypeTime
+		}
+	case reflect.Slice:
+		switch t.Elem().Kind() {
+		case reflect.Uint8:
+			return FieldTypeBytes
+		}
+	case reflect.Ptr:
+		switch t.Elem().Kind() {
+		case reflect.Float32:
+			return FieldTypeFloat32
+		case reflect.Float64:
+			return FieldTypeFloat64
+		case reflect.Int, reflect.Uint64, reflect.Uint:
+			return FieldTypeInt
+		case reflect.Int64:
+			return FieldTypeInt64
+		case reflect.Bool:
+			return FieldTypeBool
+		case reflect.Struct:
+			if t == typeTimePtr {
+				return FieldTypeTime
+			}
+		}
+	}
+	return FieldTypeString
+}
+
+//typeNameForValue returns base type
+func typeNameForValue(value interface{}) string {
 	switch val := value.(type) {
 	case float32, *float32:
-		return FieldTypeFloat
+		return FieldTypeFloat32
 	case float64, *float64:
 		return FieldTypeFloat64
 	case int, int8, int16, int32, uint, uint8, uint16, uint32, uint64, *int, *int8, *int16, *int32, *uint, *uint8, *uint16, *uint32, *uint64:
@@ -57,7 +101,7 @@ func getBaseTypeName(value interface{}) string {
 		return FieldTypeBool
 	case []byte:
 		if _, err := toolbox.ToFloat(val); err == nil {
-			return FieldTypeFloat
+			return FieldTypeFloat32
 		}
 	}
 	return FieldTypeString
@@ -70,7 +114,7 @@ func getBaseType(typeName string) reflect.Type {
 		return typeInt
 	case FieldTypeInt64:
 		return typeInt64
-	case FieldTypeFloat:
+	case FieldTypeFloat32:
 		return typeFloat
 	case FieldTypeFloat64:
 		return typeFloat64

@@ -1,10 +1,8 @@
 package gtly
 
 import (
-	"github.com/viant/toolbox"
 	"github.com/viant/xunsafe"
 	"reflect"
-	"time"
 )
 
 //NilValue is used to discriminate between unset fileds, and set filed with nil value (for REST patch operation)
@@ -29,117 +27,29 @@ type Field struct {
 	kind          reflect.Kind
 }
 
-//IsEmpty returns true if field value is empty
-func (f *Field) IsEmpty(proto *Proto, value interface{}) bool {
-	if value == nil || value == NilValue {
-		return true
-	}
-	if !f.ShallOmitEmpty(proto) {
-		return false
-	}
-	if nillable, ok := value.(Nilable); ok {
-		return nillable.IsNil()
-	}
-	switch f.DataType {
-	case FieldTypeBool:
-		if !toolbox.AsBoolean(value) {
-			return true
-		}
-	case FieldTypeInt:
-		if toolbox.AsInt(value) == 0 {
-			return true
-		}
-	case FieldTypeFloat:
-		if toolbox.AsFloat(value) == 0 {
-			return true
-		}
-	case FieldTypeString:
-		if toolbox.AsString(value) == "" {
-			return true
-		}
-	}
-	if toolbox.IsSlice(value) {
-		return reflect.ValueOf(value).Len() == 0
-	}
-	return false
-}
-
 //ShallOmitEmpty return true if shall omit empty
-func (f *Field) ShallOmitEmpty(proto *Proto) bool {
+func (f *Field) ShallOmitEmpty() bool {
 	if f.OmitEmpty == nil {
-		return proto.OmitEmpty
+		return f.provider.Proto.OmitEmpty
 	}
 	return *f.OmitEmpty
 }
 
 //TimeLayout returns timelayout
-func (f *Field) TimeLayout(proto *Proto) string {
+func (f *Field) TimeLayout() string {
 	if f.DataLayout == "" {
-		return proto.timeLayout
+		return f.provider.Proto.timeLayout
 	}
 	return f.DataLayout
 }
 
-//InitType initialise filed type
-func (f *Field) InitType(value interface{}) {
-	if value == nil {
-		return
+func (f *Field) init() {
+	if f.Type == nil && f.DataType != "" {
+		f.Type = getBaseType(f.DataType)
 	}
-	switch val := value.(type) {
-	case *Object:
-		f.DataType = FieldTypeObject
-		if val == nil {
-			f.provider = NewProvider(f.Name)
-			return
-		}
-		f.provider = &Provider{Proto: val.Proto()}
-		return
-	case *Array:
-		f.DataType = FieldTypeArray
-		if val == nil {
-			f.provider = NewProvider(f.Name)
-			return
-		}
-		f.provider = &Provider{Proto: val.Proto()}
-		return
-	case *Map:
-		f.DataType = FieldTypeArray
-		if val == nil {
-			f.provider = NewProvider(f.Name)
-			return
-		}
-		f.provider = &Provider{Proto: val.Proto()}
-		return
-	case *Multimap:
-		f.DataType = FieldTypeArray
-		if val == nil {
-			f.provider = NewProvider(f.Name)
-			return
-		}
-		f.provider = &Provider{Proto: val.Proto()}
-		return
-	case time.Time, *time.Time, **time.Time, string, []byte:
-		f.DataType = getBaseTypeName(value)
-		return
-
-	default:
-		f.DataType = getBaseTypeName(value)
+	if f.DataType == "" && f.Type != nil {
+		f.DataType = typeNameForType(f.Type)
 	}
-
-	if toolbox.IsMap(value) || toolbox.IsStruct(value) {
-		f.provider = NewProvider(f.Name)
-		f.DataType = FieldTypeObject
-		return
-	}
-	if toolbox.IsSlice(value) {
-		f.provider = NewProvider(f.Name)
-		f.DataType = FieldTypeArray
-		componentType := toolbox.DiscoverComponentType(value)
-		componentValue := reflect.New(componentType).Interface()
-		f.ComponentType = getBaseTypeName(componentValue)
-		return
-	}
-
 }
 
 //OutputName returns field output Name
@@ -174,6 +84,16 @@ func NewField(name, dataType string, options ...Option) *Field {
 	}
 	if field.Type == nil {
 		field.Type = getBaseType(field.DataType)
+	}
+	if field.provider != nil {
+		if field.Type == nil {
+			switch field.DataType {
+			case FieldTypeArray:
+				field.Type = reflect.SliceOf(field.provider.Type())
+			case FieldTypeObject:
+				field.Type = field.provider.Type()
+			}
+		}
 	}
 	return field
 }

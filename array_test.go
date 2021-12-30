@@ -6,7 +6,6 @@ import (
 	"github.com/viant/gtly"
 	"github.com/viant/toolbox/format"
 	"math"
-	"reflect"
 	"testing"
 )
 
@@ -19,7 +18,7 @@ type ArrayFieldValue struct {
 type ArrayTestCase struct {
 	description  string
 	outputFormat format.Case
-	fields       map[string]interface{}
+	fields       []*gtly.Field
 	values       []ArrayFieldValue
 }
 
@@ -28,10 +27,20 @@ func TestArray(t *testing.T) {
 		{
 			description:  "as object",
 			outputFormat: format.CaseLowerCamel,
-			fields: map[string]interface{}{
-				"Prop1": "",
-				"Prop2": 0,
-				"Prop3": 0.0,
+
+			fields: []*gtly.Field{
+				{
+					Name:     "Prop1",
+					DataType: gtly.FieldTypeString,
+				},
+				{
+					Name:     "Prop2",
+					DataType: gtly.FieldTypeInt,
+				},
+				{
+					Name:     "Prop3",
+					DataType: gtly.FieldTypeFloat64,
+				},
 			},
 			values: []ArrayFieldValue{
 				{
@@ -65,10 +74,19 @@ func TestArray(t *testing.T) {
 		{
 			description:  "as map",
 			outputFormat: format.CaseLowerCamel,
-			fields: map[string]interface{}{
-				"Prop1": "",
-				"Prop2": 0,
-				"Prop3": 0.0,
+			fields: []*gtly.Field{
+				{
+					Name:     "Prop1",
+					DataType: gtly.FieldTypeString,
+				},
+				{
+					Name:     "Prop2",
+					DataType: gtly.FieldTypeInt,
+				},
+				{
+					Name:     "Prop3",
+					DataType: gtly.FieldTypeFloat64,
+				},
 			},
 			values: []ArrayFieldValue{
 				{
@@ -102,9 +120,15 @@ func TestArray(t *testing.T) {
 	}
 
 	for i, testCase := range testCases {
-		provider := gtly.NewProvider(fmt.Sprintf("test case #%v", i))
-		addSliceProviderFields(testCase.fields, provider)
-		provider.OutputCaseFormat(format.CaseUpperCamel, testCase.outputFormat)
+
+		provider, err := gtly.NewProvider(fmt.Sprintf("test case #%v", i), testCase.fields...)
+		if !assert.Nil(t, err, testCase.description) {
+			continue
+		}
+		err = provider.OutputCaseFormat(format.CaseUpperCamel, testCase.outputFormat)
+		if !assert.Nil(t, err, testCase.description) {
+			continue
+		}
 		slice := provider.NewArray()
 		addToSlice(testCase, provider, slice)
 		assert.Equal(t, slice.Size(), len(testCase.values), testCase.description)
@@ -164,14 +188,5 @@ func addToSlice(testCase ArrayTestCase, provider *gtly.Provider, slice *gtly.Arr
 func initObjectValues(values map[string]interface{}, object *gtly.Object) {
 	for k, v := range values {
 		object.SetValue(k, v)
-	}
-}
-
-func addSliceProviderFields(fields map[string]interface{}, provider *gtly.Provider) {
-	for k, v := range fields {
-		provider.AddField(&gtly.Field{
-			Name: k,
-			Type: reflect.TypeOf(v),
-		})
 	}
 }
