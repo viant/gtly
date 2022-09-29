@@ -6,6 +6,11 @@ import (
 	"reflect"
 	"strings"
 	"time"
+	"unicode"
+)
+
+const (
+	defaultPackage = "github.com/viant/gtly"
 )
 
 var defaultEmptyValues = map[interface{}]bool{
@@ -43,12 +48,18 @@ func (p *Proto) buildType() reflect.Type {
 		if field.Type == nil {
 			field.Type = typeString
 		}
+		pkg := ""
+		if unicode.IsLower(rune(field.Name[0])) {
+			pkg = defaultPackage
+		}
 		structFields[i] = reflect.StructField{
-			Name: field.Name,
-			Type: field.Type,
+			Name:    field.Name,
+			Type:    field.Type,
+			PkgPath: pkg,
 		}
 		p.fields[i].kind = structFields[i].Type.Kind()
 	}
+
 	dataType := reflect.StructOf(structFields)
 	for i := range p.fields {
 		p.initField(&p.fields[i], dataType)
